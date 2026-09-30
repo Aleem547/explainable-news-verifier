@@ -1,0 +1,63 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# ML artifacts
+*.pt
+*.pth
+*.onnx
+*.safetensors
+
+# Local data
+data/raw/
+data/interim/
+data/processed/
+
+# MLflow
+mlruns/
+
+# DVC
+.dvc/tmp/
+
+# Logs
+logs/
+*.log
+
+# Node
+node_modules/
+.next/
+dist/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Coverage
+.coverage
+htmlcov/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+
+# Docker persistent data
+docker-data/
+
+# Temporary files
+tmp/
+temp/
