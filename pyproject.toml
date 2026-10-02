@@ -2,7 +2,19 @@
 name = "explainable-news-verifier"
 version = "0.1.0"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "alembic>=1.20.0",
+    "asyncpg>=0.31.0",
+    "fastapi>=0.142.2",
+    "httpx>=0.28.1",
+    "orjson>=3.12.0",
+    "pydantic-settings>=2.15.0",
+    "qdrant-client>=1.19.1",
+    "redis>=8.1.0",
+    "sqlalchemy[asyncio]>=2.1.2",
+    "structlog>=26.1.0",
+    "uvicorn[standard]>=0.54.0",
+]
 
 [dependency-groups]
 dev = [
@@ -32,3 +44,6 @@ testpaths = ["tests"]
 [tool.mypy]
 python_version = "3.12"
 strict = true
+
+[tool.ruff.lint.per-file-ignores]
+"migrations/versions/*.py" = ["E501"]
