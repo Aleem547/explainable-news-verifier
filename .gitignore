@@ -34,22 +34,6 @@ __pycache__/
 
 
 # =========================
-# Local datasets
-# Dataset contents are tracked using DVC.
-# =========================
-
-data/raw/**
-data/interim/**
-data/processed/**
-data/external/**
-
-!data/raw/.gitkeep
-!data/interim/.gitkeep
-!data/processed/.gitkeep
-!data/external/.gitkeep
-
-
-# =========================
 # MLflow
 # =========================
 
@@ -57,7 +41,7 @@ mlruns/
 
 
 # =========================
-# DVC
+# DVC internal cache
 # =========================
 
 .dvc/tmp/
@@ -115,7 +99,7 @@ htmlcov/
 
 
 # =========================
-# Docker persistent data
+# Docker local data
 # =========================
 
 docker-data/

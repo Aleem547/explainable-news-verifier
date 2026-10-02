@@ -56,3 +56,11 @@ strict = true
 
 [tool.ruff.lint.per-file-ignores]
 "migrations/versions/*.py" = ["E501"]
+
+
+[[tool.mypy.overrides]]
+module = [
+    "pyarrow",
+    "pyarrow.*",
+]
+ignore_missing_imports = true

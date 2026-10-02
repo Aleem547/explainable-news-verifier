@@ -1,0 +1,6 @@
+outs:
+- md5: a345a39e7aa7e588e9d5cc0ae93e5615.dir
+  size: 37374238
+  nfiles: 3
+  hash: md5
+  path: fever

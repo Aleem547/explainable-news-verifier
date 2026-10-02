@@ -1,0 +1,6 @@
+outs:
+- md5: 2be7faa5c5a88711ebcbbd5df316ad94.dir
+  size: 9802656
+  nfiles: 2
+  hash: md5
+  path: fever

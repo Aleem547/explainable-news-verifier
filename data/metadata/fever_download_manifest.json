@@ -1,0 +1,24 @@
+{
+  "dataset": "fever",
+  "downloaded_at": "2026-10-02T20:19:05.159275+00:00",
+  "files": {
+    "test": {
+      "filename": "paper_test.jsonl",
+      "sha256": "fb7b0280a0adc2302bbb29bfb7af37274fa585de3171bcf908f180642d11d88e",
+      "size_bytes": 2181168,
+      "source_url": "https://fever.ai/download/fever/paper_test.jsonl"
+    },
+    "train": {
+      "filename": "train.jsonl",
+      "sha256": "eba7e8f87076753f8494718b9a857827af7bf73e76c9e4b75420207d26e588b6",
+      "size_bytes": 33024303,
+      "source_url": "https://fever.ai/download/fever/train.jsonl"
+    },
+    "validation": {
+      "filename": "paper_dev.jsonl",
+      "sha256": "41158707810008747946bf23471e82df53e77a513524b9e3ec1c2e674ef5ef8c",
+      "size_bytes": 2168767,
+      "source_url": "https://fever.ai/download/fever/paper_dev.jsonl"
+    }
+  }
+}

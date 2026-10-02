@@ -1,0 +1,28 @@
+{
+  "artifacts": {
+    "claims": {
+      "path": "data\\processed\\fever\\claims.parquet",
+      "sha256": "0e4fc41c9af5c95628581f14c82b823935b38c9af3e486f575da82611ea0006b",
+      "size_bytes": 4811699
+    },
+    "evidence": {
+      "path": "data\\processed\\fever\\evidence.parquet",
+      "sha256": "6095d1a3446268397ce29d97e9df9c089fa8794dfce653dff84fc269f8f4813c",
+      "size_bytes": 4990957
+    }
+  },
+  "dataset": "fever",
+  "invalid_records": 0,
+  "label_counts": {
+    "NOT ENOUGH INFO": 42305,
+    "REFUTES": 36441,
+    "SUPPORTS": 86701
+  },
+  "split_counts": {
+    "test": 9999,
+    "train": 145449,
+    "validation": 9999
+  },
+  "total_claims": 165447,
+  "total_evidence_rows": 348997
+}
