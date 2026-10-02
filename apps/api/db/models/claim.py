@@ -108,5 +108,3 @@ class AtomicClaim(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         back_populates="atomic_claim",
         cascade="all, delete-orphan",
     )
-
-    

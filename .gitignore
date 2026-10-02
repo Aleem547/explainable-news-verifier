@@ -1,63 +1,129 @@
+# =========================
 # Python
+# =========================
+
 __pycache__/
 *.py[cod]
 *.egg-info/
+
 .venv/
+
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
 
+
+# =========================
 # Environment / secrets
+# =========================
+
 .env
 .env.*
 !.env.example
 
-# ML artifacts
+
+# =========================
+# ML model artifacts
+# =========================
+
 *.pt
 *.pth
 *.onnx
 *.safetensors
+*.ckpt
 
-# Local data
-data/raw/
-data/interim/
-data/processed/
 
+# =========================
+# Local datasets
+# Dataset contents are tracked using DVC.
+# =========================
+
+data/raw/**
+data/interim/**
+data/processed/**
+data/external/**
+
+!data/raw/.gitkeep
+!data/interim/.gitkeep
+!data/processed/.gitkeep
+!data/external/.gitkeep
+
+
+# =========================
 # MLflow
+# =========================
+
 mlruns/
 
-# DVC
-.dvc/tmp/
 
+# =========================
+# DVC
+# =========================
+
+.dvc/tmp/
+.dvc/cache/
+
+
+# =========================
 # Logs
+# =========================
+
 logs/
 *.log
 
-# Node
+
+# =========================
+# Node / Next.js
+# =========================
+
 node_modules/
 .next/
 dist/
 
+
+# =========================
 # IDE
+# =========================
+
 .vscode/
 .idea/
 
-# OS
+
+# =========================
+# Operating system
+# =========================
+
 Thumbs.db
 .DS_Store
 
+
+# =========================
 # Coverage
+# =========================
+
 .coverage
 htmlcov/
 
+
+# =========================
 # Terraform
+# =========================
+
 .terraform/
 *.tfstate
 *.tfstate.*
 
+
+# =========================
 # Docker persistent data
+# =========================
+
 docker-data/
 
+
+# =========================
 # Temporary files
+# =========================
+
 tmp/
 temp/

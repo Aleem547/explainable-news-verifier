@@ -5,12 +5,19 @@ requires-python = ">=3.12"
 dependencies = [
     "alembic>=1.20.0",
     "asyncpg>=0.31.0",
+    "datasets>=5.0.1",
+    "dvc>=3.67.1",
     "fastapi>=0.142.2",
+    "great-expectations>=1.23.2",
     "httpx>=0.28.1",
     "orjson>=3.12.0",
+    "pandas>=3.0.6",
+    "polars>=1.44.2",
+    "pyarrow>=25.0.1",
     "pydantic-settings>=2.15.0",
     "qdrant-client>=1.19.1",
     "redis>=8.1.0",
+    "scikit-learn>=1.9.1",
     "sqlalchemy[asyncio]>=2.1.2",
     "structlog>=26.1.0",
     "uvicorn[standard]>=0.54.0",
@@ -40,6 +47,8 @@ select = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra"
 
 [tool.mypy]
 python_version = "3.12"
