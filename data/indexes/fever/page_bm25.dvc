@@ -1,0 +1,6 @@
+outs:
+- md5: fb6ab50d46fa27ce708f6cf7db459fc2.dir
+  size: 1485233053
+  nfiles: 40
+  hash: md5
+  path: page_bm25

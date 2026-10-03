@@ -1,0 +1,10 @@
+{
+  "candidate_rows": 132320,
+  "dataset": "fever",
+  "elapsed_seconds": 1484.5453451999929,
+  "output": "data\\processed\\fever\\bm25_page_candidates.parquet",
+  "query_count": 6616,
+  "split": "validation",
+  "stage": "bm25_page_candidates",
+  "top_k": 20
+}

@@ -1,0 +1,36 @@
+{
+  "artifacts": {
+    "duplicate_wiki_sentences": {
+      "path": "data\\processed\\fever\\duplicate_wiki_sentences.parquet",
+      "sha256": "eb27fed7b564cbbc9d818d542fdb5b81334b35830ec9d75f9e346901c1685ab1",
+      "size_bytes": 1484
+    },
+    "resolved_evidence": {
+      "path": "data\\processed\\fever\\resolved_evidence.parquet",
+      "sha256": "70a3577636703a252dfa3d0b648c86eab20d9815d29ac2680bb6e1401b8f2a2c",
+      "size_bytes": 9835724
+    },
+    "unresolved_evidence": {
+      "path": "data\\processed\\fever\\unresolved_evidence.parquet",
+      "sha256": "a11f851182875ab302e7f8133139a47285c4b8eab6e044a8b7c1782641f6dc5f",
+      "size_bytes": 25057
+    }
+  },
+  "conflicting_duplicate_keys": 0,
+  "dataset": "fever",
+  "deduplicated_rows_removed": 2,
+  "deduplicated_sentence_rows": 42041084,
+  "duplicate_resolution_policy": "Duplicates with identical text are deduplicated by retaining the row with the longest raw_line, then the longest text, then source_member lexicographically. Duplicate keys with conflicting sentence text cause the pipeline to fail.",
+  "duplicate_rows": 3,
+  "duplicate_sentence_keys": 1,
+  "null_reference_rows": 56550,
+  "original_sentence_rows": 42041086,
+  "resolution_rate": 0.9927132095730167,
+  "resolvable_reference_rows": 292447,
+  "resolved_reference_rows": 290316,
+  "stage": "evidence_resolution",
+  "total_evidence_rows": 348997,
+  "unique_resolved_references": 40574,
+  "unique_unresolved_references": 356,
+  "unresolved_reference_rows": 2131
+}

@@ -1,0 +1,22 @@
+{
+  "artifact": "wikipedia_corpus",
+  "artifacts": {
+    "pages": {
+      "path": "data\\processed\\fever\\wiki_pages.parquet",
+      "sha256": "1298f70dbe753e5562033d137e2ca9d629086df4781f77b5278bc87a83c5a92b",
+      "size_bytes": 1337867713
+    },
+    "sentences": {
+      "path": "data\\processed\\fever\\wiki_sentences.parquet",
+      "sha256": "d227ca57f1bd7aa3e710ce8eb4841d1f70428eac3d2792b063e5f995abc802c9",
+      "size_bytes": 3114515696
+    }
+  },
+  "dataset": "fever",
+  "jsonl_members_processed": 109,
+  "skipped_blank_records": 1,
+  "source_archive": "data\\raw\\fever\\wiki-pages.zip",
+  "source_archive_sha256": "4b06d95da6adf7fe02d2796176c670dacccb21348da89cba4c50676ab99665f2",
+  "total_pages": 5416536,
+  "total_sentences": 42041086
+}

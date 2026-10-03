@@ -1,0 +1,32 @@
+{
+  "batch_size": 5000,
+  "dataset": "fever",
+  "fields": {
+    "body": {
+      "indexed": true,
+      "stored": false
+    },
+    "page_id": {
+      "indexed": true,
+      "stored": true
+    },
+    "title": {
+      "indexed": true,
+      "stored": true
+    }
+  },
+  "index_directory": "data\\indexes\\fever\\page_bm25",
+  "indexed_percentage": 100.0,
+  "pages_indexed": 5416536,
+  "pages_skipped": 0,
+  "source": "data\\processed\\fever\\wiki_pages.parquet",
+  "source_rows": 5416536,
+  "stage": "page_bm25_index",
+  "tokenizers": {
+    "body": "en_stem",
+    "page_id": "raw",
+    "title": "en_stem"
+  },
+  "writer_heap_size_bytes": 512000000,
+  "writer_threads": 2
+}

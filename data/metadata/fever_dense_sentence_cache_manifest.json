@@ -1,0 +1,20 @@
+{
+  "artifacts": {
+    "catalog": "data\\processed\\fever\\dense_sentence_catalog.parquet",
+    "embedding_file_size_bytes": 390703232,
+    "embeddings": "data\\processed\\fever\\dense_sentence_embeddings.npy",
+    "mapped_candidates": "data\\processed\\fever\\dense_sentence_candidates.parquet"
+  },
+  "batch_size": 64,
+  "candidate_rows": 1213337,
+  "dataset": "fever",
+  "device": "cpu",
+  "embedding_dimension": 384,
+  "embedding_seconds": 9835.949872599973,
+  "mapped_candidate_rows": 739478,
+  "max_sentences": null,
+  "model": "BAAI/bge-small-en-v1.5",
+  "split": "validation",
+  "stage": "dense_sentence_cache",
+  "unique_sentences": 254364
+}

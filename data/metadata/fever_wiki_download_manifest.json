@@ -1,0 +1,10 @@
+{
+  "artifact": "wikipedia_corpus",
+  "dataset": "fever",
+  "downloaded_at": "2026-10-02T20:35:12.098526+00:00",
+  "filename": "wiki-pages.zip",
+  "jsonl_file_count": 218,
+  "sha256": "4b06d95da6adf7fe02d2796176c670dacccb21348da89cba4c50676ab99665f2",
+  "size_bytes": 1713485474,
+  "source_url": "https://fever.ai/download/fever/wiki-pages.zip"
+}

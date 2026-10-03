@@ -1,0 +1,25 @@
+{
+  "dataset": "fever",
+  "elapsed_seconds": 295.6255132999504,
+  "evaluated_queries": 6616,
+  "metrics": {
+    "hit_at_1": 0.44316807738814995,
+    "hit_at_10": 0.742744860943168,
+    "hit_at_20": 0.8044135429262395,
+    "hit_at_5": 0.6756348246674728,
+    "hit_at_50": 0.8842200725513906,
+    "mean_latency_ms": 44.57908672874616,
+    "mean_recall_at_1": 0.3728893587267227,
+    "mean_recall_at_10": 0.6444279692841557,
+    "mean_recall_at_20": 0.7130312217799548,
+    "mean_recall_at_5": 0.5779531569440391,
+    "mean_recall_at_50": 0.8153391716177343,
+    "mrr": 0.5493752867793839,
+    "queries_per_second": 22.379665158626583
+  },
+  "model": "BAAI/bge-small-en-v1.5",
+  "results": "data\\processed\\fever\\dense_sentence_retrieval_results.parquet",
+  "search_limit": 50,
+  "split": "validation",
+  "stage": "dense_sentence_retrieval_benchmark"
+}

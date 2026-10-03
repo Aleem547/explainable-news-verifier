@@ -1,0 +1,29 @@
+{
+  "artifacts": {
+    "retrieval_gold_pages": {
+      "path": "data\\processed\\fever\\retrieval_gold_pages.parquet",
+      "sha256": "cc0c3cd359e3116002c9cef272fc4cb755fae94caac557d0108a1930b47dd98f",
+      "size_bytes": 551986
+    },
+    "retrieval_qrels": {
+      "path": "data\\processed\\fever\\retrieval_qrels.parquet",
+      "sha256": "ff34828619adea390ce816f2656af7dbc7f72bc6a6b9bc9c84ff97b725f12a6b",
+      "size_bytes": 7396003
+    },
+    "retrieval_queries": {
+      "path": "data\\processed\\fever\\retrieval_queries.parquet",
+      "sha256": "45f41ab99d4c9ff62578104d9ee81add5839ece583e6a24e0f1601625ecb0f64",
+      "size_bytes": 1853788
+    }
+  },
+  "dataset": "fever",
+  "gold_page_count": 154886,
+  "query_count": 122364,
+  "sentence_qrel_count": 224597,
+  "split_counts": {
+    "paper_dev": 0,
+    "paper_test": 0,
+    "train": 109135
+  },
+  "stage": "retrieval_benchmark"
+}

@@ -1,0 +1,10 @@
+{
+  "average_sentences_per_claim": 183.3943470374849,
+  "candidate_rows": 1213337,
+  "dataset": "fever",
+  "empty_sentence_rows": 473859,
+  "output": "data\\processed\\fever\\sentence_candidates.parquet",
+  "stage": "sentence_candidate_generation",
+  "unique_claims": 6616,
+  "unique_pages": 47627
+}
