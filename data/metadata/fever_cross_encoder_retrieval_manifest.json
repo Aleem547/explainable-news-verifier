@@ -1,0 +1,27 @@
+{
+  "dataset": "fever",
+  "elapsed_seconds": 5705.378179899999,
+  "evaluated_queries": 6616,
+  "metrics": {
+    "hit_at_1": 0.5822249093107618,
+    "hit_at_10": 0.8180169286577993,
+    "hit_at_20": 0.8526299879081015,
+    "hit_at_5": 0.7693470374848851,
+    "hit_at_50": 0.8911729141475212,
+    "mean_recall_at_1": 0.4953901156225957,
+    "mean_recall_at_10": 0.7240079754046563,
+    "mean_recall_at_20": 0.7674806163914564,
+    "mean_recall_at_5": 0.6720369026803072,
+    "mean_recall_at_50": 0.8203684535174817,
+    "mean_rerank_latency_ms": 861.4175680468509,
+    "mrr": 0.666707247019196,
+    "queries_per_second": 1.1596076178277042
+  },
+  "model": "cross-encoder/ms-marco-MiniLM-L6-v2",
+  "rankings": "data\\processed\\fever\\cross_encoder_sentence_rankings.parquet",
+  "results": "data\\processed\\fever\\cross_encoder_retrieval_results.parquet",
+  "search_limit": 50,
+  "source_depth": 50,
+  "split": "validation",
+  "stage": "cross_encoder_reranking"
+}
