@@ -111,3 +111,6 @@ docker-data/
 
 tmp/
 temp/
+
+# Local trained model artifacts
+models/
