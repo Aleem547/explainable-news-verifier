@@ -1,10 +1,21 @@
 import structlog
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.cors import (
+    CORSMiddleware,
+)
 
-from apps.api.core.config import get_settings
-from apps.api.routes.health import router as health_router
-from apps.api.routes.retrieval import router as retrieval_router
+from apps.api.core.config import (
+    get_settings,
+)
+from apps.api.routes.classification import (
+    router as classification_router,
+)
+from apps.api.routes.health import (
+    router as health_router,
+)
+from apps.api.routes.retrieval import (
+    router as retrieval_router,
+)
 
 settings = get_settings()
 
@@ -15,7 +26,10 @@ app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
     description=(
-        "Explainable News Verification API with evidence retrieval and cross-source verification."
+        "Explainable News Verification API "
+        "with claim classification, "
+        "evidence retrieval and "
+        "cross-source verification."
     ),
 )
 
@@ -36,9 +50,13 @@ app.include_router(
     prefix="/api/v1",
 )
 
-
 app.include_router(
     retrieval_router,
+    prefix="/api/v1",
+)
+
+app.include_router(
+    classification_router,
     prefix="/api/v1",
 )
 
@@ -49,9 +67,9 @@ app.include_router(
 )
 async def root() -> dict[str, str]:
     return {
-        "application": settings.app_name,
-        "environment": settings.app_env,
-        "version": settings.app_version,
+        "application": (settings.app_name),
+        "environment": (settings.app_env),
+        "version": (settings.app_version),
         "status": "running",
     }
 
@@ -60,7 +78,7 @@ async def root() -> dict[str, str]:
 async def startup_event() -> None:
     logger.info(
         "application_started",
-        application=settings.app_name,
-        environment=settings.app_env,
-        version=settings.app_version,
+        application=(settings.app_name),
+        environment=(settings.app_env),
+        version=(settings.app_version),
     )

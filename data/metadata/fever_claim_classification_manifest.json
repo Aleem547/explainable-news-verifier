@@ -1,0 +1,32 @@
+{
+  "artifact": {
+    "path": "data\\processed\\fever\\claim_classification.parquet",
+    "sha256": "7c8b3b3167dc30a6438ef1e06f9f9b128e2b707eb0d5b2d3b7a4c97d35601554",
+    "size_bytes": 2552410
+  },
+  "dataset": "fever",
+  "distribution": {
+    "test": {
+      "NOT ENOUGH INFO": 3333,
+      "REFUTES": 3333,
+      "SUPPORTS": 3333
+    },
+    "train": {
+      "NOT ENOUGH INFO": 35639,
+      "REFUTES": 29775,
+      "SUPPORTS": 80035
+    },
+    "validation": {
+      "NOT ENOUGH INFO": 3333,
+      "REFUTES": 3333,
+      "SUPPORTS": 3333
+    }
+  },
+  "label_mapping": {
+    "NOT ENOUGH INFO": 2,
+    "REFUTES": 1,
+    "SUPPORTS": 0
+  },
+  "stage": "claim_classification_dataset",
+  "total_rows": 165447
+}
