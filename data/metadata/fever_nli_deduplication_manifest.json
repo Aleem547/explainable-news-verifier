@@ -1,0 +1,36 @@
+{
+  "artifact": {
+    "path": "data\\processed\\fever\\nli_pairs_clean.parquet",
+    "sha256": "b3bd1496d9b7c3f63fb1be35cb1490f99e0730dedc91a085fe36c771e39bc964",
+    "size_bytes": 14453733
+  },
+  "clean_rows": 335719,
+  "conflicting_pairs_after": 0,
+  "conflicting_pairs_before": 0,
+  "cross_split_pair_leaks": 4,
+  "dataset": "fever",
+  "distribution": {
+    "test": {
+      "CONTRADICTION": 4930,
+      "ENTAILMENT": 4694,
+      "NEUTRAL": 7372
+    },
+    "train": {
+      "CONTRADICTION": 48825,
+      "ENTAILMENT": 122892,
+      "NEUTRAL": 130162
+    },
+    "validation": {
+      "CONTRADICTION": 4921,
+      "ENTAILMENT": 4686,
+      "NEUTRAL": 7237
+    }
+  },
+  "duplicate_groups_after": 0,
+  "duplicate_groups_before": 51608,
+  "excess_rows_before": 111325,
+  "max_copies_before": 70,
+  "original_rows": 447044,
+  "removed_rows": 111325,
+  "stage": "nli_deduplication"
+}

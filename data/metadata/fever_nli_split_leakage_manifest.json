@@ -1,0 +1,47 @@
+{
+  "ambiguous_pair_groups": 1216,
+  "ambiguous_rows_removed": 3491,
+  "artifact": {
+    "path": "data\\processed\\fever\\nli_pairs_final.parquet",
+    "sha256": "763ab8052fa692d4b85dfc45fd74721bb636655efeb4eef2c801f7b0c2d6378c",
+    "size_bytes": 13992588
+  },
+  "conflicting_labels_after": 0,
+  "cross_split_leakage_after": 0,
+  "cross_split_leakage_before": 4,
+  "cross_split_removed_by_split": {
+    "train": 4
+  },
+  "cross_split_rows_removed": 4,
+  "dataset": "fever",
+  "distribution": {
+    "test": {
+      "CONTRADICTION": 4828,
+      "ENTAILMENT": 4644,
+      "NEUTRAL": 7262
+    },
+    "train": {
+      "CONTRADICTION": 46696,
+      "ENTAILMENT": 113153,
+      "NEUTRAL": 122197
+    },
+    "validation": {
+      "CONTRADICTION": 4832,
+      "ENTAILMENT": 4588,
+      "NEUTRAL": 7084
+    }
+  },
+  "final_rows": 315284,
+  "logical_duplicate_groups_before": 11689,
+  "logical_duplicate_rows_removed": 16940,
+  "logical_duplicates_after": 0,
+  "original_rows": 335719,
+  "policy": {
+    "ambiguous_pairs": "Remove every logical claim-premise pair that has more than one NLI label.",
+    "logical_duplicates": "Keep one deterministic representative per exact claim-premise pair.",
+    "split_priority": "Preserve test over validation over train."
+  },
+  "rows_after_ambiguity_cleanup": 332228,
+  "stage": "nli_final_integrity_cleanup",
+  "total_removed_rows": 20435
+}

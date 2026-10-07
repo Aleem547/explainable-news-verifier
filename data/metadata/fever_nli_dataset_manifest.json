@@ -1,0 +1,41 @@
+{
+  "artifact": {
+    "path": "data\\processed\\fever\\nli_pairs.parquet",
+    "sha256": "aaffe11eb93cb615d3dbbb92f481d8e6081d0a99dfb9027215acaff4f1a672d1",
+    "size_bytes": 15640472
+  },
+  "dataset": "fever",
+  "distribution": {
+    "test": {
+      "CONTRADICTION": 5936,
+      "ENTAILMENT": 6246,
+      "NEUTRAL": 10209
+    },
+    "train": {
+      "CONTRADICTION": 59868,
+      "ENTAILMENT": 160305,
+      "NEUTRAL": 182244
+    },
+    "validation": {
+      "CONTRADICTION": 6171,
+      "ENTAILMENT": 6146,
+      "NEUTRAL": 9919
+    }
+  },
+  "duplicate_rows": 51608,
+  "gold_positive_pairs": 244672,
+  "hard_negative_coverage": 0.8271154852210306,
+  "hard_neutral_pairs": 202372,
+  "label_mapping": {
+    "CONTRADICTION": 1,
+    "ENTAILMENT": 0,
+    "NEUTRAL": 2
+  },
+  "stage": "nli_pair_dataset",
+  "strategy": {
+    "contradiction": "REFUTES claim with complete gold evidence set",
+    "entailment": "SUPPORTS claim with complete gold evidence set",
+    "neutral": "nearest non-gold sentence from the same gold Wikipedia page"
+  },
+  "total_rows": 447044
+}
