@@ -1,13 +1,25 @@
-"""Orchestrate existing retrieval and calibrated, evidence-pair NLI."""
+"""Orchestrate existing retrieval, calibrated NLI and auditable page aggregation."""
 
 import math
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field, replace
 from enum import StrEnum
 from time import perf_counter
 from typing import Protocol
 
 from ml.retrieval.pipeline import RetrievedEvidence
+from ml.verification.decisive_admissibility import (
+    AdmissibilityDecision,
+    AdmissibilityReason,
+    check_decisive_admissibility,
+)
+from ml.verification.evidence_aggregation import (
+    AggregationReason,
+    ContributionRole,
+    aggregate_evidence,
+    contribution_role,
+)
+from ml.verification.evidence_quality import ExcludedEvidence, screen_evidence
 
 
 class EvidenceVerdict(StrEnum):
@@ -67,6 +79,8 @@ class AssessedEvidence:
     probability_entailment: float
     probability_contradiction: float
     probability_neutral: float
+    contribution_role: ContributionRole = ContributionRole.NOT_DECISIVE
+    admissibility_reason: AdmissibilityReason | None = None
 
 
 @dataclass(frozen=True)
@@ -80,9 +94,19 @@ class ClaimVerification:
     refuting_pages: list[str]
     evidence: list[AssessedEvidence]
     latency_ms: float
+    quality_excluded_count: int = 0
+    quality_exclusions: list[ExcludedEvidence] = field(default_factory=list)
+    unused_candidate_count: int = 0
+    aggregation_reason: AggregationReason = AggregationReason.NO_DECISIVE_EVIDENCE
+    supporting_evidence_count: int = 0
+    refuting_evidence_count: int = 0
+    primary_evidence_count: int = 0
+    corroboration_status: str = "NOT_ESTABLISHED_SINGLE_CORPUS"
+    admissibility_blocked_count: int = 0
     warning: str = (
-        "This is a provisional inference from retrieved Wikipedia evidence. "
-        "NLI confidence is per evidence pair, not a calibrated claim-level probability."
+        "Provisional finding from one Wikipedia-derived corpus. Wikipedia pages "
+        "are not independent external sources; NLI scores are calibrated per "
+        "evidence pair, not as claim-level truth probabilities."
     )
 
 
@@ -95,12 +119,14 @@ class ClaimVerificationPipeline:
         retriever: EvidenceRetriever,
         nli_predictor: NliPredictor,
         confidence_threshold: float = 0.90,
+        enforce_subject_grounding: bool = True,
     ) -> None:
         if not 0.0 < confidence_threshold <= 1.0:
             raise ValueError("confidence_threshold must be in (0, 1].")
         self.retriever = retriever
         self.nli_predictor = nli_predictor
         self.confidence_threshold = confidence_threshold
+        self.enforce_subject_grounding = enforce_subject_grounding
 
     def verify(self, claim: str, *, top_k: int = 5) -> ClaimVerification:
         normalized_claim = claim.strip()
@@ -110,9 +136,10 @@ class ClaimVerificationPipeline:
             raise ValueError("top_k must be between 1 and 20.")
 
         started = perf_counter()
-        retrieved = self.retriever.retrieve(normalized_claim, top_k=top_k)
-        # Empty sentences should not become apparently meaningful NLI evidence.
-        usable = [item for item in retrieved if item.text.strip()]
+        candidate_count = min(20, top_k * 2)
+        retrieved = self.retriever.retrieve(normalized_claim, top_k=candidate_count)
+        quality = screen_evidence(normalized_claim, retrieved, top_k=top_k)
+        usable = quality.selected
         distributions = (
             self.nli_predictor.predict(normalized_claim, [item.text for item in usable])
             if usable
@@ -122,18 +149,17 @@ class ClaimVerificationPipeline:
             raise ValueError("NLI predictor returned an incorrect number of results.")
 
         assessments: list[AssessedEvidence] = []
-        support_pages: set[str] = set()
-        refute_pages: set[str] = set()
-
+        blocked_count = 0
         for item, raw_distribution in zip(usable, distributions, strict=True):
             distribution = raw_distribution.checked()
             label, confidence = distribution.top_label()
-            accepted = confidence >= self.confidence_threshold
-            if accepted and label == "ENTAILMENT":
-                support_pages.add(item.page_id)
-            elif accepted and label == "CONTRADICTION":
-                refute_pages.add(item.page_id)
-
+            decision = (
+                check_decisive_admissibility(normalized_claim, item.page_id, item.text, label)
+                if self.enforce_subject_grounding
+                else AdmissibilityDecision(permitted=True)
+            )
+            if not decision.permitted and confidence >= self.confidence_threshold:
+                blocked_count += 1
             assessments.append(
                 AssessedEvidence(
                     rank=item.rank,
@@ -147,30 +173,37 @@ class ClaimVerificationPipeline:
                     cross_encoder_score=item.cross_encoder_score,
                     nli_label=label,
                     nli_confidence=confidence,
-                    accepted=accepted,
+                    accepted=(confidence >= self.confidence_threshold and decision.permitted),
                     probability_entailment=distribution.entailment,
                     probability_contradiction=distribution.contradiction,
                     probability_neutral=distribution.neutral,
+                    admissibility_reason=(
+                        decision.reason if confidence >= self.confidence_threshold else None
+                    ),
                 )
             )
 
-        if support_pages and refute_pages:
-            verdict = EvidenceVerdict.CONFLICTING_EVIDENCE
-        elif support_pages:
-            verdict = EvidenceVerdict.SUPPORTING_EVIDENCE
-        elif refute_pages:
-            verdict = EvidenceVerdict.REFUTING_EVIDENCE
-        else:
-            verdict = EvidenceVerdict.INSUFFICIENT_EVIDENCE
-
+        summary = aggregate_evidence(assessments)
+        annotated = [
+            replace(item, contribution_role=contribution_role(item, summary))
+            for item in assessments
+        ]
         return ClaimVerification(
             claim=normalized_claim,
-            verdict=verdict,
+            verdict=EvidenceVerdict(summary.verdict),
             confidence_threshold=self.confidence_threshold,
             retrieved_count=len(retrieved),
-            assessed_count=len(assessments),
-            supporting_pages=sorted(support_pages),
-            refuting_pages=sorted(refute_pages),
-            evidence=assessments,
+            assessed_count=len(annotated),
+            supporting_pages=summary.supporting_pages,
+            refuting_pages=summary.refuting_pages,
+            evidence=annotated,
             latency_ms=(perf_counter() - started) * 1000,
+            quality_excluded_count=len(quality.excluded),
+            quality_exclusions=quality.excluded,
+            unused_candidate_count=quality.unused_candidate_count,
+            aggregation_reason=summary.reason,
+            supporting_evidence_count=summary.supporting_evidence_count,
+            refuting_evidence_count=summary.refuting_evidence_count,
+            primary_evidence_count=summary.primary_count,
+            admissibility_blocked_count=blocked_count,
         )

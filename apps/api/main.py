@@ -16,6 +16,9 @@ from apps.api.routes.health import (
 from apps.api.routes.retrieval import (
     router as retrieval_router,
 )
+from apps.api.routes.verification import (
+    router as verification_router,
+)
 
 settings = get_settings()
 
@@ -44,7 +47,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 app.include_router(
     health_router,
     prefix="/api/v1",
@@ -57,6 +59,11 @@ app.include_router(
 
 app.include_router(
     classification_router,
+    prefix="/api/v1",
+)
+
+app.include_router(
+    verification_router,
     prefix="/api/v1",
 )
 
