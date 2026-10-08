@@ -1,0 +1,15 @@
+{
+  "dataset_sha256": "763ab8052fa692d4b85dfc45fd74721bb636655efeb4eef2c801f7b0c2d6378c",
+  "examples": 16504,
+  "label_order": [
+    "ENTAILMENT",
+    "CONTRADICTION",
+    "NEUTRAL"
+  ],
+  "max_length": 256,
+  "model_fingerprints": {
+    "config.json": "452fd37ea89bc50469e2224e8ea6f9671470220309a062ce17ae03b94f26435c",
+    "model.safetensors": "5a54558ecd0c240231a4e3fab7e238495f13e581c59dcf79531c772d4ffc97a9",
+    "training_args.bin": "19e5ef3af0c76f76704c72b1c9f80d68f613d2d042b379c09aa52ac2222bb6a0"
+  }
+}

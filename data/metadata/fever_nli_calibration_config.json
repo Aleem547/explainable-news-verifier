@@ -1,0 +1,18 @@
+{
+  "calibration_rows": 8252,
+  "method": "temperature_scaling",
+  "model": "nli-deberta-v3-small_fever_nli_30k",
+  "model_fingerprints": {
+    "config.json": "452fd37ea89bc50469e2224e8ea6f9671470220309a062ce17ae03b94f26435c",
+    "model.safetensors": "5a54558ecd0c240231a4e3fab7e238495f13e581c59dcf79531c772d4ffc97a9",
+    "training_args.bin": "19e5ef3af0c76f76704c72b1c9f80d68f613d2d042b379c09aa52ac2222bb6a0"
+  },
+  "project_label_order": [
+    "ENTAILMENT",
+    "CONTRADICTION",
+    "NEUTRAL"
+  ],
+  "seed": 42,
+  "source_split": "validation",
+  "temperature": 2.175340631566059
+}

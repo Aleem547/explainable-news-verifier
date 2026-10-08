@@ -1,0 +1,129 @@
+{
+  "accepted_accuracy": 0.9573780426219574,
+  "accepted_count": 9901,
+  "accepted_coverage": 0.5916696545954344,
+  "calibrated": {
+    "accuracy": 0.8503047687343134,
+    "brier_score": 0.23201755407113256,
+    "ece_15_bins": 0.050201267566042845,
+    "examples": 16734,
+    "macro_f1": 0.8516562606256359,
+    "mean_confidence": 0.8803614343553454,
+    "nll": 0.4171863668844784,
+    "selective_results": [
+      {
+        "accepted": 16600,
+        "accepted_accuracy": 0.8533734939759036,
+        "coverage": 0.9919923509023545,
+        "threshold": 0.5
+      },
+      {
+        "accepted": 15777,
+        "accepted_accuracy": 0.8707612347087532,
+        "coverage": 0.9428110433847257,
+        "threshold": 0.7
+      },
+      {
+        "accepted": 14843,
+        "accepted_accuracy": 0.8897123223068113,
+        "coverage": 0.8869965340026293,
+        "threshold": 0.8
+      },
+      {
+        "accepted": 9901,
+        "accepted_accuracy": 0.9573780426219574,
+        "coverage": 0.5916696545954344,
+        "threshold": 0.9
+      },
+      {
+        "accepted": 112,
+        "accepted_accuracy": 0.9910714285714286,
+        "coverage": 0.006692960439823115,
+        "threshold": 0.95
+      }
+    ],
+    "temperature": 2.175340631566059
+  },
+  "calibration_sha256": "cc72cf72a9e58d9555c22cb52f9f9d3038deb451fca09e41037e846bf8821a5c",
+  "confidence_threshold": 0.9,
+  "confusion_matrix": [
+    [
+      4221,
+      203,
+      220
+    ],
+    [
+      213,
+      4368,
+      247
+    ],
+    [
+      541,
+      1081,
+      5640
+    ]
+  ],
+  "dataset": "fever",
+  "dataset_sha256": "763ab8052fa692d4b85dfc45fd74721bb636655efeb4eef2c801f7b0c2d6378c",
+  "evaluation_scope": "FEVER evidence-pair NLI, not end-to-end article-level fact verification.",
+  "inference_seconds": 1088.043610599998,
+  "max_length": 256,
+  "model": "nli-deberta-v3-small_fever_nli_30k",
+  "model_fingerprints": {
+    "config.json": "452fd37ea89bc50469e2224e8ea6f9671470220309a062ce17ae03b94f26435c",
+    "model.safetensors": "5a54558ecd0c240231a4e3fab7e238495f13e581c59dcf79531c772d4ffc97a9",
+    "training_args.bin": "19e5ef3af0c76f76704c72b1c9f80d68f613d2d042b379c09aa52ac2222bb6a0"
+  },
+  "per_class_f1": {
+    "CONTRADICTION": 0.833587786259542,
+    "ENTAILMENT": 0.877638008108951,
+    "NEUTRAL": 0.843742987508415
+  },
+  "predictions_file": "data\\processed\\fever\\nli_deberta_30k_test_predictions.parquet",
+  "split": "test",
+  "stage": "phase_7d_final_nli_test",
+  "temperature": 2.175340631566059,
+  "test_examples": 16734,
+  "uncalibrated": {
+    "accuracy": 0.8503047687343134,
+    "brier_score": 0.2723058535985568,
+    "ece_15_bins": 0.12742410691692066,
+    "examples": 16734,
+    "macro_f1": 0.8516562606256359,
+    "mean_confidence": 0.9774891507763329,
+    "nll": 0.6424577620197256,
+    "selective_results": [
+      {
+        "accepted": 16707,
+        "accepted_accuracy": 0.8508409648650266,
+        "coverage": 0.9983865184653998,
+        "threshold": 0.5
+      },
+      {
+        "accepted": 16400,
+        "accepted_accuracy": 0.8578048780487805,
+        "coverage": 0.9800406358312418,
+        "threshold": 0.7
+      },
+      {
+        "accepted": 16170,
+        "accepted_accuracy": 0.8628324056895486,
+        "coverage": 0.9662961634994621,
+        "threshold": 0.8
+      },
+      {
+        "accepted": 15778,
+        "accepted_accuracy": 0.8708961845607809,
+        "coverage": 0.9428708019600812,
+        "threshold": 0.9
+      },
+      {
+        "accepted": 15303,
+        "accepted_accuracy": 0.8801542181271647,
+        "coverage": 0.9144854786661886,
+        "threshold": 0.95
+      }
+    ],
+    "temperature": 1.0
+  }
+}

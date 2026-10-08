@@ -1,0 +1,194 @@
+{
+  "calibration_artifact": "C:\\Projects\\explainable-news-verifier\\models\\nli_verifier\\nli-deberta-v3-small_fever_nli_30k\\calibration.json",
+  "calibration_rows": 8252,
+  "dataset": "fever",
+  "dataset_sha256": "763ab8052fa692d4b85dfc45fd74721bb636655efeb4eef2c801f7b0c2d6378c",
+  "diagnostic_rows": 8252,
+  "inference_seconds": 1061.1955256999936,
+  "logits_artifact": "C:\\Projects\\explainable-news-verifier\\data\\processed\\fever\\nli_deberta_30k_validation_logits.npz",
+  "model_fingerprints": {
+    "config.json": "452fd37ea89bc50469e2224e8ea6f9671470220309a062ce17ae03b94f26435c",
+    "model.safetensors": "5a54558ecd0c240231a4e3fab7e238495f13e581c59dcf79531c772d4ffc97a9",
+    "training_args.bin": "19e5ef3af0c76f76704c72b1c9f80d68f613d2d042b379c09aa52ac2222bb6a0"
+  },
+  "results": {
+    "calibration": {
+      "after": {
+        "accuracy": 0.8544595249636452,
+        "brier_score": 0.22451849354970554,
+        "ece_15_bins": 0.05076290470717702,
+        "examples": 8252,
+        "macro_f1": 0.856797490308849,
+        "mean_confidence": 0.8811613335333367,
+        "nll": 0.4007201592330132,
+        "selective_results": [
+          {
+            "accepted": 8196,
+            "accepted_accuracy": 0.8572474377745242,
+            "coverage": 0.9932137663596704,
+            "threshold": 0.5
+          },
+          {
+            "accepted": 7791,
+            "accepted_accuracy": 0.8747272493903222,
+            "coverage": 0.944134755210858,
+            "threshold": 0.7
+          },
+          {
+            "accepted": 7307,
+            "accepted_accuracy": 0.8953058710825236,
+            "coverage": 0.8854823073194377,
+            "threshold": 0.8
+          },
+          {
+            "accepted": 4905,
+            "accepted_accuracy": 0.9624872579001019,
+            "coverage": 0.594401357246728,
+            "threshold": 0.9
+          },
+          {
+            "accepted": 51,
+            "accepted_accuracy": 1.0,
+            "coverage": 0.006180319922443044,
+            "threshold": 0.95
+          }
+        ],
+        "temperature": 2.175340631566059
+      },
+      "before": {
+        "accuracy": 0.8544595249636452,
+        "brier_score": 0.26477348259980993,
+        "ece_15_bins": 0.1238020579794368,
+        "examples": 8252,
+        "macro_f1": 0.856797490308849,
+        "mean_confidence": 0.9780861575994083,
+        "nll": 0.6084929056491107,
+        "selective_results": [
+          {
+            "accepted": 8242,
+            "accepted_accuracy": 0.8546469303567096,
+            "coverage": 0.9987881725642268,
+            "threshold": 0.5
+          },
+          {
+            "accepted": 8102,
+            "accepted_accuracy": 0.8605282646260183,
+            "coverage": 0.9818225884634028,
+            "threshold": 0.7
+          },
+          {
+            "accepted": 7991,
+            "accepted_accuracy": 0.8658490802152421,
+            "coverage": 0.9683713039263209,
+            "threshold": 0.8
+          },
+          {
+            "accepted": 7795,
+            "accepted_accuracy": 0.8742783835792175,
+            "coverage": 0.9446194861851672,
+            "threshold": 0.9
+          },
+          {
+            "accepted": 7538,
+            "accepted_accuracy": 0.8851154152295039,
+            "coverage": 0.9134755210857974,
+            "threshold": 0.95
+          }
+        ],
+        "temperature": 1.0
+      }
+    },
+    "diagnostic": {
+      "after": {
+        "accuracy": 0.8544595249636452,
+        "brier_score": 0.2257459734143985,
+        "ece_15_bins": 0.05349686707130257,
+        "examples": 8252,
+        "macro_f1": 0.8568225522838442,
+        "mean_confidence": 0.8824607226336209,
+        "nll": 0.4032038883691121,
+        "selective_results": [
+          {
+            "accepted": 8180,
+            "accepted_accuracy": 0.8580684596577017,
+            "coverage": 0.9912748424624334,
+            "threshold": 0.5
+          },
+          {
+            "accepted": 7790,
+            "accepted_accuracy": 0.8736842105263158,
+            "coverage": 0.9440135724672807,
+            "threshold": 0.7
+          },
+          {
+            "accepted": 7368,
+            "accepted_accuracy": 0.8883007600434311,
+            "coverage": 0.8928744546776539,
+            "threshold": 0.8
+          },
+          {
+            "accepted": 4991,
+            "accepted_accuracy": 0.9631336405529954,
+            "coverage": 0.6048230731943771,
+            "threshold": 0.9
+          },
+          {
+            "accepted": 55,
+            "accepted_accuracy": 1.0,
+            "coverage": 0.006665050896752302,
+            "threshold": 0.95
+          }
+        ],
+        "temperature": 2.175340631566059
+      },
+      "before": {
+        "accuracy": 0.8544595249636452,
+        "brier_score": 0.2648838369978434,
+        "ece_15_bins": 0.12346000839302279,
+        "examples": 8252,
+        "macro_f1": 0.8568225522838442,
+        "mean_confidence": 0.9779195333566679,
+        "nll": 0.6171391786082173,
+        "selective_results": [
+          {
+            "accepted": 8243,
+            "accepted_accuracy": 0.8552711391483683,
+            "coverage": 0.9989093553078041,
+            "threshold": 0.5
+          },
+          {
+            "accepted": 8085,
+            "accepted_accuracy": 0.8617192331478046,
+            "coverage": 0.9797624818225885,
+            "threshold": 0.7
+          },
+          {
+            "accepted": 7975,
+            "accepted_accuracy": 0.867460815047022,
+            "coverage": 0.9664323800290838,
+            "threshold": 0.8
+          },
+          {
+            "accepted": 7797,
+            "accepted_accuracy": 0.8740541233807875,
+            "coverage": 0.9448618516723218,
+            "threshold": 0.9
+          },
+          {
+            "accepted": 7587,
+            "accepted_accuracy": 0.8801897983392646,
+            "coverage": 0.9194134755210858,
+            "threshold": 0.95
+          }
+        ],
+        "temperature": 1.0
+      }
+    }
+  },
+  "seed": 42,
+  "selected_model": "nli-deberta-v3-small_fever_nli_30k",
+  "selection_caveat": "The full validation split was previously used for model selection; diagnostic metrics are not independent.",
+  "stage": "phase_7d_temperature_calibration",
+  "temperature": 2.175340631566059,
+  "validation_rows": 16504
+}
