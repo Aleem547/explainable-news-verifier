@@ -1,0 +1,51 @@
+{
+  "balanced_training": true,
+  "balanced_validation": true,
+  "batch_size": 4,
+  "dataset": "fever",
+  "device": "cpu",
+  "epochs": 1.0,
+  "learning_rate": 2e-05,
+  "max_length": 256,
+  "model": "cross-encoder/nli-deberta-v3-small",
+  "model_label_mapping": {
+    "CONTRADICTION": 0,
+    "ENTAILMENT": 1,
+    "NEUTRAL": 2
+  },
+  "output_directory": "models\\nli_verifier\\nli-deberta-v3-small_fever_nli_3k",
+  "project_label_mapping": {
+    "CONTRADICTION": 1,
+    "ENTAILMENT": 0,
+    "NEUTRAL": 2
+  },
+  "project_to_model_label_id": {
+    "0": 1,
+    "1": 0,
+    "2": 2
+  },
+  "run_name": "nli-deberta-v3-small_fever_nli_3k",
+  "stage": "evidence_conditioned_nli",
+  "train_metrics": {
+    "epoch": 1.0,
+    "total_flos": 64813139152128.0,
+    "train_loss": 0.6464514007568359,
+    "train_runtime": 1137.8598,
+    "train_samples_per_second": 2.637,
+    "train_steps_per_second": 0.659
+  },
+  "training_examples": 3000,
+  "validation_examples": 900,
+  "validation_metrics": {
+    "epoch": 1.0,
+    "eval_accuracy": 0.8133333333333334,
+    "eval_loss": 0.7545062899589539,
+    "eval_macro_f1": 0.8124379224155347,
+    "eval_macro_precision": 0.8127961235729232,
+    "eval_macro_recall": 0.8133333333333334,
+    "eval_runtime": 56.4797,
+    "eval_samples_per_second": 15.935,
+    "eval_steps_per_second": 3.984,
+    "eval_weighted_f1": 0.8124379224155348
+  }
+}

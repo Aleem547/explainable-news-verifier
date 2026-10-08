@@ -1,0 +1,41 @@
+{
+  "balanced_training": true,
+  "balanced_validation": true,
+  "batch_size": 8,
+  "dataset": "fever",
+  "device": "cpu",
+  "epochs": 1.0,
+  "label_mapping": {
+    "CONTRADICTION": 1,
+    "ENTAILMENT": 0,
+    "NEUTRAL": 2
+  },
+  "learning_rate": 2e-05,
+  "max_length": 256,
+  "model": "distilbert-base-uncased",
+  "output_directory": "models\\nli_verifier\\distilbert-base-uncased_fever_nli_15k",
+  "run_name": "distilbert-base-uncased_fever_nli_15k",
+  "stage": "evidence_conditioned_nli",
+  "train_metrics": {
+    "epoch": 1.0,
+    "total_flos": 412674353190000.0,
+    "train_loss": 0.6096557474772135,
+    "train_runtime": 3344.1935,
+    "train_samples_per_second": 4.485,
+    "train_steps_per_second": 0.561
+  },
+  "training_examples": 15000,
+  "validation_examples": 3000,
+  "validation_metrics": {
+    "epoch": 1.0,
+    "eval_accuracy": 0.8093333333333333,
+    "eval_loss": 0.4972417950630188,
+    "eval_macro_f1": 0.8091752325538134,
+    "eval_macro_precision": 0.80916065464635,
+    "eval_macro_recall": 0.8093333333333333,
+    "eval_runtime": 132.7856,
+    "eval_samples_per_second": 22.593,
+    "eval_steps_per_second": 2.824,
+    "eval_weighted_f1": 0.8091752325538134
+  }
+}

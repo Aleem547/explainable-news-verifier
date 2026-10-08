@@ -1,0 +1,92 @@
+{
+  "dataset": "fever",
+  "evaluated_examples": 16504,
+  "results": {
+    "deberta_v3_small_15k": {
+      "confusion_matrix": [
+        [
+          4166,
+          142,
+          280
+        ],
+        [
+          193,
+          4290,
+          349
+        ],
+        [
+          494,
+          1095,
+          5495
+        ]
+      ],
+      "device": "cpu",
+      "elapsed_seconds": 969.5971371999985,
+      "examples": 16504,
+      "examples_per_second": 17.02150240218348,
+      "mean_confidence": 0.9742509326416777,
+      "metrics": {
+        "accuracy": 0.8453102278235579,
+        "contradiction_f1": 0.8282652765710976,
+        "entailment_f1": 0.8825336299120856,
+        "macro_f1": 0.8476234594394781,
+        "macro_precision": 0.8439723491737956,
+        "macro_recall": 0.857181249860838,
+        "neutral_f1": 0.8320714718352513,
+        "weighted_f1": 0.8449852409663787
+      },
+      "model": "deberta_v3_small_15k",
+      "model_directory": "models\\nli_verifier\\nli-deberta-v3-small_fever_nli_15k",
+      "model_to_project_label_id": {
+        "0": 1,
+        "1": 0,
+        "2": 2
+      }
+    },
+    "distilbert_30k": {
+      "confusion_matrix": [
+        [
+          4011,
+          283,
+          294
+        ],
+        [
+          347,
+          4024,
+          461
+        ],
+        [
+          565,
+          1280,
+          5239
+        ]
+      ],
+      "device": "cpu",
+      "elapsed_seconds": 672.6001824999985,
+      "examples": 16504,
+      "examples_per_second": 24.537608566587085,
+      "mean_confidence": 0.8728357353258989,
+      "metrics": {
+        "accuracy": 0.8042898691226369,
+        "contradiction_f1": 0.7724349745656973,
+        "entailment_f1": 0.8434444327620649,
+        "macro_f1": 0.8056907500900361,
+        "macro_precision": 0.8030104116759134,
+        "macro_recall": 0.8155241738854494,
+        "neutral_f1": 0.8011928429423459,
+        "weighted_f1": 0.8045188411304764
+      },
+      "model": "distilbert_30k",
+      "model_directory": "models\\nli_verifier\\distilbert-base-uncased_fever_nli_30k",
+      "model_to_project_label_id": {
+        "0": 0,
+        "1": 1,
+        "2": 2
+      }
+    }
+  },
+  "selection_metric": "macro_f1",
+  "split": "validation",
+  "stage": "nli_full_validation_comparison",
+  "winner": "deberta_v3_small_15k"
+}

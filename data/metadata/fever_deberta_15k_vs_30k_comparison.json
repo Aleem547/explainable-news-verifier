@@ -1,0 +1,91 @@
+{
+  "dataset": "fever",
+  "split": "validation",
+  "validation_examples": 16504,
+  "selection_metric": "macro_f1",
+  "results": {
+    "deberta_15k": {
+      "model": "deberta_15k",
+      "model_directory": "models\\nli_verifier\\nli-deberta-v3-small_fever_nli_15k",
+      "examples": 16504,
+      "device": "cpu",
+      "metrics": {
+        "accuracy": 0.8453102278235579,
+        "macro_f1": 0.8476234594394781,
+        "weighted_f1": 0.8449852409663787,
+        "macro_precision": 0.8439723491737956,
+        "macro_recall": 0.857181249860838,
+        "entailment_f1": 0.8825336299120856,
+        "contradiction_f1": 0.8282652765710976,
+        "neutral_f1": 0.8320714718352513
+      },
+      "mean_confidence": 0.9742509326416777,
+      "elapsed_seconds": 966.0108083999949,
+      "examples_per_second": 17.08469497078982,
+      "confusion_matrix": [
+        [
+          4166,
+          142,
+          280
+        ],
+        [
+          193,
+          4290,
+          349
+        ],
+        [
+          494,
+          1095,
+          5495
+        ]
+      ],
+      "model_to_project_label_id": {
+        "0": 1,
+        "1": 0,
+        "2": 2
+      }
+    },
+    "deberta_30k": {
+      "model": "deberta_30k",
+      "model_directory": "models\\nli_verifier\\nli-deberta-v3-small_fever_nli_30k",
+      "examples": 16504,
+      "device": "cpu",
+      "metrics": {
+        "accuracy": 0.8544595249636452,
+        "macro_f1": 0.8568105835470327,
+        "weighted_f1": 0.8539633653216118,
+        "macro_precision": 0.8533995341242374,
+        "macro_recall": 0.8681069670287763,
+        "entailment_f1": 0.891951604418727,
+        "contradiction_f1": 0.838728212986018,
+        "neutral_f1": 0.8397519332363526
+      },
+      "mean_confidence": 0.978002845495217,
+      "elapsed_seconds": 964.7855735000048,
+      "examples_per_second": 17.10639177587155,
+      "confusion_matrix": [
+        [
+          4239,
+          143,
+          206
+        ],
+        [
+          166,
+          4379,
+          287
+        ],
+        [
+          512,
+          1088,
+          5484
+        ]
+      ],
+      "model_to_project_label_id": {
+        "0": 1,
+        "1": 0,
+        "2": 2
+      }
+    }
+  },
+  "winner": "deberta_30k"
+}
