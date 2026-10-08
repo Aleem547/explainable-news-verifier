@@ -13,6 +13,7 @@ from apps.api.routes.classification import (
 from apps.api.routes.health import (
     router as health_router,
 )
+from apps.api.routes.multisource import router as multisource_router
 from apps.api.routes.retrieval import (
     router as retrieval_router,
 )
@@ -66,6 +67,8 @@ app.include_router(
     verification_router,
     prefix="/api/v1",
 )
+
+app.include_router(multisource_router, prefix="/api/v1")
 
 
 @app.get(
