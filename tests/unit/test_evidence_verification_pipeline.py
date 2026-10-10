@@ -1,10 +1,13 @@
 from collections.abc import Sequence
+from dataclasses import asdict
 
 import pytest
 
+from apps.api.schemas.verification import VerifiedEvidenceResponse
 from ml.retrieval.pipeline import RetrievedEvidence
 from ml.verification.evidence_pipeline import (
     ClaimVerificationPipeline,
+    EvidenceDecisionReason,
     EvidenceVerdict,
     NliProbabilities,
 )
@@ -15,7 +18,7 @@ def evidence(page_id: str, rank: int) -> RetrievedEvidence:
         rank=rank,
         page_id=page_id,
         sentence_id=rank,
-        text=f"Sentence from {page_id}",
+        text=f"Sentence {rank} from {page_id}",
         page_rank=rank,
         bm25_score=1.0,
         dense_score=0.8,
@@ -119,3 +122,93 @@ def test_invalid_claim_and_top_k() -> None:
         pipeline.verify(" ")
     with pytest.raises(ValueError, match="top_k"):
         pipeline.verify("Claim", top_k=21)
+
+
+def test_neutral_above_threshold_is_never_accepted() -> None:
+    result = make_pipeline(
+        [evidence("Eiffel_Tower", 1)], [NliProbabilities(0.01, 0.01, 0.98)]
+    ).verify("The Eiffel Tower is in Paris")
+    item = result.evidence[0]
+    assert item.nli_label == "NEUTRAL"
+    assert item.nli_confidence == pytest.approx(0.98)
+    assert item.accepted is False
+    assert item.decision_reason == EvidenceDecisionReason.NEUTRAL_RELATION
+    assert item.admissibility_reason is None
+    assert result.verdict == EvidenceVerdict.INSUFFICIENT_EVIDENCE
+    assert result.primary_evidence_count == 0
+    assert result.admissibility_blocked_count == 0
+
+
+def test_entailment_below_threshold_explains_rejection() -> None:
+    result = make_pipeline(
+        [evidence("Indian_Army", 1)], [NliProbabilities(0.787, 0.05, 0.163)]
+    ).verify("The Indian Army is a military force")
+    item = result.evidence[0]
+    assert item.accepted is False
+    assert item.decision_reason == EvidenceDecisionReason.BELOW_CONFIDENCE_THRESHOLD
+    assert item.admissibility_reason is None
+    assert result.verdict == EvidenceVerdict.INSUFFICIENT_EVIDENCE
+
+
+def test_high_confidence_subject_mismatch_remains_blocked() -> None:
+    result = make_pipeline(
+        [evidence("Indian_Armed_Forces", 1)], [NliProbabilities(0.97, 0.01, 0.02)]
+    ).verify("The Indian Army is a military force")
+    item = result.evidence[0]
+    assert item.accepted is False
+    assert item.decision_reason == EvidenceDecisionReason.SUBJECT_NOT_GROUNDED
+    assert str(item.admissibility_reason) == "SUBJECT_NOT_GROUNDED"
+    assert result.admissibility_blocked_count == 1
+    assert result.verdict == EvidenceVerdict.INSUFFICIENT_EVIDENCE
+
+
+def test_grounded_entailment_at_threshold_is_accepted() -> None:
+    result = make_pipeline(
+        [evidence("Eiffel_Tower", 1)], [NliProbabilities(0.9, 0.05, 0.05)]
+    ).verify("The Eiffel Tower is in Paris")
+    item = result.evidence[0]
+    assert item.accepted is True
+    assert item.decision_reason == EvidenceDecisionReason.ACCEPTED_DECISIVE
+    assert result.verdict == EvidenceVerdict.SUPPORTING_EVIDENCE
+
+
+def test_accepted_grounded_contradiction_gets_explicit_reason() -> None:
+    result = make_pipeline(
+        [evidence("Eiffel_Tower", 1)], [NliProbabilities(0.03, 0.95, 0.02)]
+    ).verify("The Eiffel Tower is in London")
+    item = result.evidence[0]
+    assert item.accepted is True
+    assert item.decision_reason == EvidenceDecisionReason.ACCEPTED_DECISIVE
+    assert result.verdict == EvidenceVerdict.REFUTING_EVIDENCE
+
+
+def test_new_evidence_reason_validates_in_api_schema() -> None:
+    result = make_pipeline([evidence("Source_A", 1)], [NliProbabilities(0.01, 0.01, 0.98)]).verify(
+        "Unrelated claim"
+    )
+    response = VerifiedEvidenceResponse.model_validate(asdict(result.evidence[0]))
+    assert response.accepted is False
+    assert response.decision_reason == "NEUTRAL_RELATION"
+    assert response.model_dump()["decision_reason"] == "NEUTRAL_RELATION"
+
+
+def test_neutral_does_not_count_when_support_exists() -> None:
+    result = make_pipeline(
+        [evidence("Eiffel_Tower", 1), evidence("Eiffel_Tower", 2)],
+        [NliProbabilities(0.97, 0.02, 0.01), NliProbabilities(0.01, 0.01, 0.98)],
+    ).verify("The Eiffel Tower is in Paris")
+    assert [item.accepted for item in result.evidence] == [True, False]
+    assert result.supporting_evidence_count == 1
+    assert result.primary_evidence_count == 1
+    assert result.supporting_pages == ["Eiffel_Tower"]
+    assert result.verdict == EvidenceVerdict.SUPPORTING_EVIDENCE
+
+
+def test_old_api_evidence_payload_remains_valid() -> None:
+    result = make_pipeline([evidence("Source_A", 1)], [NliProbabilities(0.01, 0.01, 0.98)]).verify(
+        "Unrelated claim"
+    )
+    payload = asdict(result.evidence[0])
+    payload.pop("decision_reason")
+    old_style_response = VerifiedEvidenceResponse.model_validate(payload)
+    assert old_style_response.decision_reason is None

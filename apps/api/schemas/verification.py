@@ -42,6 +42,16 @@ class VerifiedEvidenceResponse(BaseModel):
     probability_contradiction: float = Field(ge=0.0, le=1.0)
     probability_neutral: float = Field(ge=0.0, le=1.0)
     admissibility_reason: Literal["SUBJECT_NOT_GROUNDED"] | None = None
+    # Additive, optional for compatibility with existing stored/API responses.
+    decision_reason: (
+        Literal[
+            "ACCEPTED_DECISIVE",
+            "NEUTRAL_RELATION",
+            "BELOW_CONFIDENCE_THRESHOLD",
+            "SUBJECT_NOT_GROUNDED",
+        ]
+        | None
+    ) = None
     contribution_role: Literal[
         "PRIMARY_SUPPORT",
         "PRIMARY_REFUTATION",

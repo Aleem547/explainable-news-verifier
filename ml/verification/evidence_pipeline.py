@@ -22,6 +22,18 @@ from ml.verification.evidence_aggregation import (
 from ml.verification.evidence_quality import ExcludedEvidence, screen_evidence
 
 
+class EvidenceDecisionReason(StrEnum):
+    """Why a sentence-level NLI result was or was not accepted as decisive.
+
+    This explains an evidence decision, not the truth of the overall claim.
+    """
+
+    ACCEPTED_DECISIVE = "ACCEPTED_DECISIVE"
+    NEUTRAL_RELATION = "NEUTRAL_RELATION"
+    BELOW_CONFIDENCE_THRESHOLD = "BELOW_CONFIDENCE_THRESHOLD"
+    SUBJECT_NOT_GROUNDED = "SUBJECT_NOT_GROUNDED"
+
+
 class EvidenceVerdict(StrEnum):
     SUPPORTING_EVIDENCE = "SUPPORTING_EVIDENCE"
     REFUTING_EVIDENCE = "REFUTING_EVIDENCE"
@@ -81,6 +93,7 @@ class AssessedEvidence:
     probability_neutral: float
     contribution_role: ContributionRole = ContributionRole.NOT_DECISIVE
     admissibility_reason: AdmissibilityReason | None = None
+    decision_reason: EvidenceDecisionReason | None = None
 
 
 @dataclass(frozen=True)
@@ -158,8 +171,22 @@ class ClaimVerificationPipeline:
                 if self.enforce_subject_grounding
                 else AdmissibilityDecision(permitted=True)
             )
-            if not decision.permitted and confidence >= self.confidence_threshold:
+            # A confident NEUTRAL label is not proof for or against the claim.
+            # Only decisive labels can pass the acceptance gate.
+            is_decisive = label in ("ENTAILMENT", "CONTRADICTION")
+            meets_threshold = confidence >= self.confidence_threshold
+            accepted = is_decisive and meets_threshold and decision.permitted
+
+            if not is_decisive:
+                decision_reason = EvidenceDecisionReason.NEUTRAL_RELATION
+            elif not meets_threshold:
+                decision_reason = EvidenceDecisionReason.BELOW_CONFIDENCE_THRESHOLD
+            elif not decision.permitted:
+                decision_reason = EvidenceDecisionReason.SUBJECT_NOT_GROUNDED
                 blocked_count += 1
+            else:
+                decision_reason = EvidenceDecisionReason.ACCEPTED_DECISIVE
+
             assessments.append(
                 AssessedEvidence(
                     rank=item.rank,
@@ -173,13 +200,12 @@ class ClaimVerificationPipeline:
                     cross_encoder_score=item.cross_encoder_score,
                     nli_label=label,
                     nli_confidence=confidence,
-                    accepted=(confidence >= self.confidence_threshold and decision.permitted),
+                    accepted=accepted,
                     probability_entailment=distribution.entailment,
                     probability_contradiction=distribution.contradiction,
                     probability_neutral=distribution.neutral,
-                    admissibility_reason=(
-                        decision.reason if confidence >= self.confidence_threshold else None
-                    ),
+                    admissibility_reason=(decision.reason if meets_threshold else None),
+                    decision_reason=decision_reason,
                 )
             )
 
