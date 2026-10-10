@@ -19,7 +19,9 @@ export type ApiErrorCode =
   | "BACKEND_REJECTED_REQUEST"
   | "BACKEND_ERROR"
   | "INVALID_BACKEND_RESPONSE"
-  | "PRODUCTION_ROUTE_DISABLED";
+  | "PRODUCTION_ROUTE_DISABLED"
+  | "AUTH_REQUIRED"
+  | "FORBIDDEN";
 
 export interface ApiErrorResponse {
   code: ApiErrorCode;

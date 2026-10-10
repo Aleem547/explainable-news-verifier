@@ -10,6 +10,7 @@ from apps.api.routes.retrieval import router as retrieval_router
 from apps.api.routes.verification import router as verification_router
 from apps.api.security.body_limit import InferenceBodyLimitMiddleware
 from apps.api.security.inference import require_inference_access
+from apps.api.security.user_quota import require_verified_user_access
 
 settings = get_settings()
 logger = structlog.get_logger(__name__)
@@ -50,7 +51,11 @@ app.include_router(health_router, prefix="/api/v1")
 secured = [Depends(require_inference_access)]
 app.include_router(retrieval_router, prefix="/api/v1", dependencies=secured)
 app.include_router(classification_router, prefix="/api/v1", dependencies=secured)
-app.include_router(verification_router, prefix="/api/v1", dependencies=secured)
+app.include_router(
+    verification_router,
+    prefix="/api/v1",
+    dependencies=[*secured, Depends(require_verified_user_access)],
+)
 app.include_router(multisource_router, prefix="/api/v1", dependencies=secured)
 
 

@@ -45,7 +45,7 @@ function backendEndpoint(path: AllowedEndpoint): URL | null {
 
 export async function requestBackend(
   path: AllowedEndpoint,
-  options: { method: "GET" | "POST"; body?: unknown; timeoutMs?: number },
+  options: { method: "GET" | "POST"; body?: unknown; timeoutMs?: number; verifiedUserId?: string },
 ): Promise<BackendResult> {
   const url = backendEndpoint(path);
   if (!url) {
@@ -55,7 +55,7 @@ export async function requestBackend(
   // Private server-to-server credential. Not sent to the browser and never
   // configured with a NEXT_PUBLIC_* environment variable.
   const token = process.env.INTERNAL_API_TOKEN?.trim();
-  if (process.env.NODE_ENV === "production" && path === "/api/v1/verify" && (!token || token.length < 32)) {
+  if (process.env.NODE_ENV === "production" && path === "/api/v1/verify" && (!token || token.length < 32 || !options.verifiedUserId)) {
     return failure(503, "BACKEND_NOT_CONFIGURED", "The verification service is not configured.");
   }
 
@@ -63,6 +63,10 @@ export async function requestBackend(
     const headers: Record<string, string> = {};
     if (options.method === "POST") headers["Content-Type"] = "application/json";
     if (token && path === "/api/v1/verify") headers["X-Service-Token"] = token;
+    // Set only from server-verified Auth.js session, never from browser input.
+    if (options.verifiedUserId && path === "/api/v1/verify") {
+      headers["X-Verified-User"] = options.verifiedUserId;
+    }
 
     const response = await fetch(url, {
       method: options.method,

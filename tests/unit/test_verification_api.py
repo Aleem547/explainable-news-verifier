@@ -1,11 +1,13 @@
 """FastAPI contract tests using fake results; pretrained models are not loaded."""
 
+from collections.abc import Iterator
 from dataclasses import dataclass
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from apps.api.core.service_auth import require_internal_verification
 from apps.api.routes import verification as verification_route
 from apps.api.services.verification import (
     VerificationBusyError,
@@ -47,17 +49,33 @@ class FakeResult:
 
 
 @pytest.fixture
-def client() -> TestClient:
+def client() -> Iterator[TestClient]:
     application = FastAPI()
-    application.include_router(verification_route.router, prefix="/api/v1")
-    return TestClient(application)
+
+    application.include_router(
+        verification_route.router,
+        prefix="/api/v1",
+    )
+
+    # Override only the authentication dependency in this test application.
+    # Production authentication remains enabled and unchanged.
+    application.dependency_overrides[require_internal_verification] = lambda: "test-verified-user"
+
+    with TestClient(application) as test_client:
+        yield test_client
+
+    application.dependency_overrides.clear()
 
 
-def test_success(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_success(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     seen: list[tuple[str, int]] = []
 
     def fake_run(claim: str, top_k: int) -> FakeResult:
         seen.append((claim, top_k))
+
         return FakeResult(
             claim=claim,
             verdict="SUPPORTING_EVIDENCE",
@@ -71,12 +89,24 @@ def test_success(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
             warning="Provisional evidence-based finding, not a truth probability.",
         )
 
-    monkeypatch.setattr(verification_route, "run_verification", fake_run)
-    response = client.post(
-        "/api/v1/verify", json={"claim": "  Eiffel Tower is in Paris  ", "top_k": 3}
+    monkeypatch.setattr(
+        verification_route,
+        "run_verification",
+        fake_run,
     )
+
+    response = client.post(
+        "/api/v1/verify",
+        json={
+            "claim": "  Eiffel Tower is in Paris  ",
+            "top_k": 3,
+        },
+    )
+
     assert response.status_code == 200
+
     payload = response.json()
+
     assert seen == [("Eiffel Tower is in Paris", 3)]
     assert payload["verdict"] == "SUPPORTING_EVIDENCE"
     assert payload["supporting_pages"] == ["Eiffel_Tower"]
@@ -89,7 +119,7 @@ def test_success(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
 @pytest.mark.parametrize(
     "payload",
     [
-        {"claim": "  "},
+        {"claim": "   "},
         {"claim": "ab"},
         {"claim": "a" * 2001},
         {"claim": "The Eiffel Tower is in Paris", "top_k": 0},
@@ -97,35 +127,79 @@ def test_success(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
         {"top_k": 3},
     ],
 )
-def test_invalid_request_is_422(client: TestClient, payload: dict[str, object]) -> None:
-    assert client.post("/api/v1/verify", json=payload).status_code == 422
+def test_invalid_request_is_422(
+    client: TestClient,
+    payload: dict[str, object],
+) -> None:
+    response = client.post(
+        "/api/v1/verify",
+        json=payload,
+    )
+
+    assert response.status_code == 422
 
 
-def test_busy_is_429(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_busy_is_429(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     def fake_run(claim: str, top_k: int) -> FakeResult:
         raise VerificationBusyError("Busy")
 
-    monkeypatch.setattr(verification_route, "run_verification", fake_run)
-    response = client.post("/api/v1/verify", json={"claim": "Is Paris in France?"})
+    monkeypatch.setattr(
+        verification_route,
+        "run_verification",
+        fake_run,
+    )
+
+    response = client.post(
+        "/api/v1/verify",
+        json={"claim": "Is Paris in France?"},
+    )
+
     assert response.status_code == 429
     assert response.headers["retry-after"] == "5"
 
 
-def test_missing_model_is_503(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_missing_model_is_503(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     def fake_run(claim: str, top_k: int) -> FakeResult:
         raise VerificationUnavailableError("Model unavailable")
 
-    monkeypatch.setattr(verification_route, "run_verification", fake_run)
-    response = client.post("/api/v1/verify", json={"claim": "Is Paris in France?"})
+    monkeypatch.setattr(
+        verification_route,
+        "run_verification",
+        fake_run,
+    )
+
+    response = client.post(
+        "/api/v1/verify",
+        json={"claim": "Is Paris in France?"},
+    )
+
     assert response.status_code == 503
     assert "Model unavailable" not in response.text
 
 
-def test_unexpected_failure_is_500(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_unexpected_failure_is_500(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     def fake_run(claim: str, top_k: int) -> FakeResult:
         raise RuntimeError("Internal implementation detail")
 
-    monkeypatch.setattr(verification_route, "run_verification", fake_run)
-    response = client.post("/api/v1/verify", json={"claim": "Is Paris in France?"})
+    monkeypatch.setattr(
+        verification_route,
+        "run_verification",
+        fake_run,
+    )
+
+    response = client.post(
+        "/api/v1/verify",
+        json={"claim": "Is Paris in France?"},
+    )
+
     assert response.status_code == 500
     assert "Internal implementation detail" not in response.text

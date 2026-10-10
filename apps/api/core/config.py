@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     # In staging/production the auth dependency fails closed when unset/short.
     internal_api_token: str = ""
     inference_requests_per_minute: int = Field(default=30, ge=1, le=10_000)
+    inference_user_requests_per_minute: int = Field(default=10, ge=1, le=1000)
     inference_max_body_bytes: int = Field(default=16_384, ge=1024, le=65_536)
 
     model_config = SettingsConfigDict(
