@@ -30,6 +30,8 @@ function backendEndpoint(path: AllowedEndpoint): URL | null {
     const base = new URL(configured);
     if (
       !["http:", "https:"].includes(base.protocol) ||
+      // A private service credential must never leave Vercel over plain HTTP.
+      (process.env.NODE_ENV === "production" && base.protocol !== "https:") ||
       base.username ||
       base.password ||
       base.search ||
@@ -71,6 +73,8 @@ export async function requestBackend(
     const response = await fetch(url, {
       method: options.method,
       headers,
+      // Never forward a private credential through an upstream redirect.
+      redirect: "error",
       body: options.method === "POST" ? JSON.stringify(options.body) : undefined,
       cache: "no-store",
       signal: AbortSignal.timeout(options.timeoutMs ?? DEFAULT_TIMEOUT_MS),

@@ -1,3 +1,4 @@
+
 name: explainable-news-verifier-dev
 
 services:
@@ -124,6 +125,47 @@ services:
 
     networks:
       - verifier_network
+
+
+  # FastAPI Backend Service
+
+  api:
+    image: verifier-api:10c3.1
+
+    build:
+      context: ../..
+      dockerfile: infra/docker/api/Dockerfile
+
+    env_file:
+      - ../../.env
+      - ../../.env.docker
+
+    ports:
+      - "127.0.0.1:8001:8000"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+
+    networks:
+      - verifier_network
+
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import json; from urllib.request import urlopen; data = json.load(urlopen('http://127.0.0.1:8000/api/v1/ready', timeout=5)); assert data.get('ready') is True"
+      interval: 30s
+      timeout: 8s
+      retries: 3
+      start_period: 120s
+
+    restart: unless-stopped
 
 
 volumes:

@@ -1,0 +1,28 @@
+# Allow only the API's application code and locked dependency metadata.
+# A positive allowlist prevents local secrets, datasets and model weights
+# from silently entering the Docker build context.
+**
+!pyproject.toml
+!uv.lock
+!apps/
+!apps/api/
+!apps/api/**
+!ml/
+!ml/**
+
+# Re-exclude generated files and secrets, even inside allowed source directories.
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/.env
+**/.env.*
+**/secrets/**
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+**/.venv/
+**/node_modules/

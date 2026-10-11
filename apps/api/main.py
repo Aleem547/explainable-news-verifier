@@ -7,10 +7,12 @@ from apps.api.routes.classification import router as classification_router
 from apps.api.routes.health import router as health_router
 from apps.api.routes.multisource import router as multisource_router
 from apps.api.routes.retrieval import router as retrieval_router
+from apps.api.routes.usage_statistics import router as usage_statistics_router
 from apps.api.routes.verification import router as verification_router
 from apps.api.security.body_limit import InferenceBodyLimitMiddleware
 from apps.api.security.inference import require_inference_access
 from apps.api.security.user_quota import require_verified_user_access
+from apps.api.security.verification_audit import VerificationAuditMiddleware
 
 settings = get_settings()
 logger = structlog.get_logger(__name__)
@@ -44,7 +46,14 @@ if settings.app_env.casefold() == "development":
         allow_headers=["Content-Type"],
     )
 
+# Add this last so verification failures from body limits, service authorization,
+# and quota dependencies are all recorded without logging request payloads.
+app.add_middleware(
+    VerificationAuditMiddleware, audit_key=settings.internal_api_token, persist_usage=True
+)
+
 app.include_router(health_router, prefix="/api/v1")
+app.include_router(usage_statistics_router, prefix="/api/v1")
 
 # Apply the service gate to every expensive route, not only /verify.
 # Multi-source routes retain their separate, existing operator authorization.

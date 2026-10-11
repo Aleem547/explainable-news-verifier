@@ -21,6 +21,7 @@ from apps.api.db.models.retrieval_observation import RetrievalObservation
 from apps.api.db.models.source import Source
 from apps.api.db.models.source_profile_observation import SourceProfileObservation
 from apps.api.db.models.verification import VerificationResult
+from apps.api.db.models.verification_usage import VerificationUsageEvent
 
 __all__ = [
     "AnalysisJob",
@@ -45,4 +46,5 @@ __all__ = [
     "Source",
     "SourceProfileObservation",
     "VerificationResult",
+    "VerificationUsageEvent",
 ]
