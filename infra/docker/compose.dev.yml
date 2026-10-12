@@ -127,7 +127,7 @@ services:
       - verifier_network
 
 
-  # FastAPI Backend Service
+  # FastAPI AI Verification Backend
 
   api:
     image: verifier-api:10c3.1
@@ -139,6 +139,21 @@ services:
     env_file:
       - ../../.env
       - ../../.env.docker
+
+    volumes:
+
+      # Original trained models: read-only
+      - ../../models:/app/models:ro
+
+      # Original inference data: read-only
+      - ../../data:/app/data:ro
+
+      # Separate writable Tantivy runtime index
+      # Original BM25 index remains protected
+      - ../../docker-data/page_bm25:/app/data/indexes/fever/page_bm25:rw
+
+      # Persistent Hugging Face model cache
+      - verifier_hf_cache:/home/verifier/.cache/huggingface
 
     ports:
       - "127.0.0.1:8001:8000"
@@ -177,6 +192,8 @@ volumes:
   qdrant_data:
 
   mlflow_artifacts:
+
+  verifier_hf_cache:
 
 
 networks:
