@@ -1,6 +1,11 @@
+
 name: explainable-news-verifier-dev
 
 services:
+
+  # ==========================================
+  # PostgreSQL 17 - Application Database
+  # ==========================================
 
   postgres:
     image: postgres:17-alpine
@@ -32,16 +37,18 @@ services:
       - verifier_network
 
 
+  # ==========================================
+  # Redis 8 - Cache and Supporting Services
+  # ==========================================
+
   redis:
     image: redis:8-alpine
     restart: unless-stopped
 
     command:
-      [
-        "redis-server",
-        "--appendonly",
-        "yes"
-      ]
+      - redis-server
+      - --appendonly
+      - "yes"
 
     ports:
       - "${REDIS_PORT}:6379"
@@ -51,11 +58,9 @@ services:
 
     healthcheck:
       test:
-        [
-          "CMD",
-          "redis-cli",
-          "ping"
-        ]
+        - CMD
+        - redis-cli
+        - ping
       interval: 5s
       timeout: 5s
       retries: 10
@@ -63,6 +68,10 @@ services:
     networks:
       - verifier_network
 
+
+  # ==========================================
+  # Qdrant - Vector Database
+  # ==========================================
 
   qdrant:
     image: qdrant/qdrant:latest
@@ -78,6 +87,10 @@ services:
     networks:
       - verifier_network
 
+
+  # ==========================================
+  # MLflow - Experiment and Artifact Tracking
+  # ==========================================
 
   mlflow:
     build:
@@ -111,12 +124,10 @@ services:
 
     healthcheck:
       test:
-        [
-          "CMD",
-          "python",
-          "-c",
-          "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"
-        ]
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"
       interval: 10s
       timeout: 5s
       retries: 10
@@ -126,7 +137,9 @@ services:
       - verifier_network
 
 
-  # FastAPI AI Verification Backend
+  # ==========================================
+  # FastAPI - AI Verification Backend
+  # ==========================================
 
   api:
     image: verifier-api:10c3.1
@@ -135,16 +148,37 @@ services:
       context: ../..
       dockerfile: infra/docker/api/Dockerfile
 
+    # ========================================
+    # Phase 11C.2 - Resource Hardening
+    # ========================================
+
+    # Initial CPU limit: 8 logical CPUs
+    cpus: "8.0"
+
+    # Initial maximum container memory: 3 GiB
+    mem_limit: 3g
+
+    # Maximum number of process/thread IDs
+    pids_limit: 512
+
+    # ========================================
+    # Environment Configuration
+    # ========================================
+
     env_file:
       - ../../.env
       - ../../.env.docker
 
+    # ========================================
+    # Persistent Data and Model Mounts
+    # ========================================
+
     volumes:
 
-      # Original trained models: read-only
+      # Original trained models remain read-only
       - ../../models:/app/models:ro
 
-      # Original inference data: read-only
+      # Original inference data remains read-only
       - ../../data:/app/data:ro
 
       # Separate writable Tantivy runtime index
@@ -154,19 +188,29 @@ services:
       # Persistent Hugging Face model cache
       - verifier_hf_cache:/home/verifier/.cache/huggingface
 
+    # ========================================
+    # Network and Service Dependencies
+    # ========================================
+
     ports:
       - "127.0.0.1:8001:8000"
 
     depends_on:
       postgres:
         condition: service_healthy
+
       redis:
         condition: service_healthy
+
       qdrant:
         condition: service_started
 
     networks:
       - verifier_network
+
+    # ========================================
+    # API Health Check
+    # ========================================
 
     healthcheck:
       test:
@@ -174,19 +218,30 @@ services:
         - python
         - -c
         - "import json; from urllib.request import urlopen; data = json.load(urlopen('http://127.0.0.1:8000/api/v1/ready', timeout=5)); assert data.get('ready') is True"
+
       interval: 30s
       timeout: 8s
       retries: 3
       start_period: 120s
 
-    # tini forwards SIGTERM to Uvicorn and reaps orphaned child processes.
+    # ========================================
+    # Phase 11B - Graceful Shutdown
+    # ========================================
+
+    # Forward signals and reap child processes
     init: true
-    # Gives active model requests time to finish before Docker sends SIGKILL.
-    # Not a guarantee if a request hangs or exceeds this budget.
+
+    # Allow active inference time to finish
+    # before Docker forcibly terminates the API.
+    # Not a guarantee if inference exceeds this.
     stop_grace_period: 90s
 
     restart: unless-stopped
 
+
+# ==========================================
+# Persistent Docker Volumes
+# ==========================================
 
 volumes:
 
@@ -200,6 +255,10 @@ volumes:
 
   verifier_hf_cache:
 
+
+# ==========================================
+# Docker Networks
+# ==========================================
 
 networks:
 
