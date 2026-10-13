@@ -1,4 +1,3 @@
-
 /**
  * Server-only FastAPI transport.
  * Never import this file from a client component.
@@ -67,6 +66,8 @@ export async function requestBackend(
     body?: unknown;
     timeoutMs?: number;
     verifiedUserId?: string;
+    /** The incoming Next.js request signal, if available. */
+    signal?: AbortSignal;
   },
 ): Promise<BackendResult> {
   const url = backendEndpoint(path);
@@ -79,8 +80,7 @@ export async function requestBackend(
     );
   }
 
-  // Private server-to-server credential.
-  // Never expose this token to the browser.
+  // Private server-to-server credential. Never expose it to the browser.
   const token = process.env.INTERNAL_API_TOKEN?.trim();
 
   if (
@@ -94,6 +94,30 @@ export async function requestBackend(
       "The verification service is not configured.",
     );
   }
+
+  // A client that already disconnected must not start a new inference request.
+  if (options.signal?.aborted) {
+    return failure(499, "BACKEND_UNAVAILABLE", "The request was cancelled.");
+  }
+
+  // Use a combined AbortController so either the upstream client disconnect
+  // OR the local timeout can abort fetch. Clean up the timer and listener.
+  const controller = new AbortController();
+  let clientCancelled = false;
+  let timedOut = false;
+
+  const onClientAbort = () => {
+    clientCancelled = true;
+    controller.abort();
+  };
+
+  options.signal?.addEventListener("abort", onClientAbort, { once: true });
+
+  const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const timeoutId = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, timeoutMs);
 
   try {
     const headers: Record<string, string> = {};
@@ -114,27 +138,26 @@ export async function requestBackend(
     const response = await fetch(url, {
       method: options.method,
       headers,
-
       // Never forward private credentials through redirects.
       redirect: "error",
-
       body:
         options.method === "POST"
           ? JSON.stringify(options.body)
           : undefined,
-
       cache: "no-store",
-
-      signal: AbortSignal.timeout(
-        options.timeoutMs ?? DEFAULT_TIMEOUT_MS,
-      ),
+      signal: controller.signal,
     });
 
     let data: unknown;
 
     try {
       data = await response.json();
-    } catch {
+    } catch (error) {
+      // An abort during response-body parsing must still be classified
+      // as cancellation or timeout, not an invalid-backend JSON response.
+      if (controller.signal.aborted) {
+        throw error;
+      }
       return failure(
         502,
         "INVALID_BACKEND_RESPONSE",
@@ -143,7 +166,6 @@ export async function requestBackend(
     }
 
     if (!response.ok) {
-      // Preserve existing validation error behavior.
       if (response.status === 422) {
         const details =
           typeof data === "object" &&
@@ -160,8 +182,6 @@ export async function requestBackend(
         );
       }
 
-      // A busy verification worker or an enforced request limit.
-      // Preserve HTTP 429 rather than treating it as a crash.
       if (response.status === 429) {
         return failure(
           429,
@@ -170,7 +190,6 @@ export async function requestBackend(
         );
       }
 
-      // Infrastructure or inference service unavailable.
       if (response.status === 503) {
         return failure(
           503,
@@ -179,7 +198,6 @@ export async function requestBackend(
         );
       }
 
-      // All other unexpected upstream failures.
       return failure(
         502,
         "BACKEND_ERROR",
@@ -187,22 +205,19 @@ export async function requestBackend(
       );
     }
 
-    return {
-      ok: true,
-      status: 200,
-      data,
-    };
+    return { ok: true, status: 200, data };
   } catch (error: unknown) {
+    if (clientCancelled || options.signal?.aborted) {
+      // 499 is a nonstandard, server-internal status indicating that the
+      // caller has gone away. No successful response is promised to it.
+      return failure(499, "BACKEND_UNAVAILABLE", "The request was cancelled.");
+    }
+
     if (
-      error instanceof Error &&
-      (error.name === "TimeoutError" ||
-        error.name === "AbortError")
+      timedOut ||
+      (error instanceof Error && error.name === "TimeoutError")
     ) {
-      return failure(
-        504,
-        "BACKEND_TIMEOUT",
-        "The backend request timed out.",
-      );
+      return failure(504, "BACKEND_TIMEOUT", "The backend request timed out.");
     }
 
     return failure(
@@ -210,5 +225,8 @@ export async function requestBackend(
       "BACKEND_UNAVAILABLE",
       "The backend service is unavailable.",
     );
+  } finally {
+    clearTimeout(timeoutId);
+    options.signal?.removeEventListener("abort", onClientAbort);
   }
 }

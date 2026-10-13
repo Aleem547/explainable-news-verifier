@@ -57,9 +57,11 @@ async function parseLimitedJson(request: Request, maxBytes: number): Promise<
   if (!request.body) {
     return { ok: false, status: 400, message: "JSON request body is required." };
   }
+
   const reader = request.body.getReader();
   const chunks: Uint8Array[] = [];
   let received = 0;
+
   try {
     while (true) {
       const { done, value } = await reader.read();
@@ -71,13 +73,20 @@ async function parseLimitedJson(request: Request, maxBytes: number): Promise<
       }
       chunks.push(value);
     }
+
     const bytes = new Uint8Array(received);
     let offset = 0;
     for (const chunk of chunks) {
       bytes.set(chunk, offset);
       offset += chunk.byteLength;
     }
-    return { ok: true, value: JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes)) };
+
+    return {
+      ok: true,
+      value: JSON.parse(
+        new TextDecoder("utf-8", { fatal: true }).decode(bytes),
+      ),
+    };
   } catch {
     return { ok: false, status: 400, message: "Request body must be valid JSON." };
   } finally {
@@ -86,6 +95,11 @@ async function parseLimitedJson(request: Request, maxBytes: number): Promise<
 }
 
 export async function POST(request: Request) {
+  // A disconnected client does not need a backend inference request.
+  if (request.signal.aborted) {
+    return errorResponse(499, "BACKEND_UNAVAILABLE", "The request was cancelled.");
+  }
+
   const isProduction = process.env.NODE_ENV === "production";
   const loginRequired = isProduction || process.env.VERIFY_REQUIRE_LOGIN === "true";
   let verifiedUserId: string | undefined;
@@ -94,27 +108,49 @@ export async function POST(request: Request) {
     // Production refuses requests until all OAuth and service secrets exist.
     if (
       isProduction &&
-      (!process.env.AUTH_SECRET || !process.env.AUTH_GOOGLE_ID ||
-        !process.env.AUTH_GOOGLE_SECRET || !process.env.INTERNAL_API_TOKEN)
+      (!process.env.AUTH_SECRET ||
+        !process.env.AUTH_GOOGLE_ID ||
+        !process.env.AUTH_GOOGLE_SECRET ||
+        !process.env.INTERNAL_API_TOKEN)
     ) {
-      return errorResponse(503, "BACKEND_NOT_CONFIGURED", "Secure verification is not configured.");
+      return errorResponse(
+        503,
+        "BACKEND_NOT_CONFIGURED",
+        "Secure verification is not configured.",
+      );
     }
 
-    // Same-origin POSTs only; do not accept credentialed cross-origin requests.
+    // Same-origin POSTs only; reject credentialed cross-origin requests.
     const origin = request.headers.get("origin");
     const fetchSite = request.headers.get("sec-fetch-site");
-    if ((origin && origin !== new URL(request.url).origin) || fetchSite === "cross-site") {
-      return errorResponse(403, "FORBIDDEN", "Cross-origin verification is not permitted.");
+    if (
+      (origin && origin !== new URL(request.url).origin) ||
+      fetchSite === "cross-site"
+    ) {
+      return errorResponse(
+        403,
+        "FORBIDDEN",
+        "Cross-origin verification is not permitted.",
+      );
     }
 
     try {
       const session = await auth();
       if (session?.user?.id) verifiedUserId = session.user.id;
     } catch {
-      return errorResponse(503, "BACKEND_UNAVAILABLE", "Authentication is temporarily unavailable.");
+      return errorResponse(
+        503,
+        "BACKEND_UNAVAILABLE",
+        "Authentication is temporarily unavailable.",
+      );
     }
+
     if (!verifiedUserId) {
-      return errorResponse(401, "AUTH_REQUIRED", "Sign in at /account before verifying claims.");
+      return errorResponse(
+        401,
+        "AUTH_REQUIRED",
+        "Sign in at /account before verifying claims.",
+      );
     }
   }
 
@@ -131,25 +167,38 @@ export async function POST(request: Request) {
   if (!parsed.ok) {
     return errorResponse(parsed.status, "INVALID_REQUEST", parsed.message);
   }
-  const incoming = parsed.value;
 
+  const incoming = parsed.value;
   if (!isObject(incoming) || typeof incoming.claim !== "string") {
     return errorResponse(422, "INVALID_REQUEST", "A claim string is required.");
   }
 
   const claim = incoming.claim.trim();
   if (claim.length < 3 || claim.length > 2000) {
-    return errorResponse(422, "INVALID_REQUEST", "Claim must contain 3–2000 characters.");
+    return errorResponse(422, "INVALID_REQUEST", "Claim must contain 3 to 2000 characters.");
   }
 
   const topK = incoming.top_k === undefined ? 5 : incoming.top_k;
-  if (typeof topK !== "number" || !Number.isInteger(topK) || topK < 1 || topK > 20) {
+  if (
+    typeof topK !== "number" ||
+    !Number.isInteger(topK) ||
+    topK < 1 ||
+    topK > 20
+  ) {
     return errorResponse(422, "INVALID_REQUEST", "top_k must be an integer from 1 to 20.");
+  }
+
+  if (request.signal.aborted) {
+    return errorResponse(499, "BACKEND_UNAVAILABLE", "The request was cancelled.");
   }
 
   const body: VerificationRequest = { claim, top_k: topK };
   const result = await requestBackend("/api/v1/verify", {
-    method: "POST", body, verifiedUserId,
+    method: "POST",
+    body,
+    verifiedUserId,
+    // Forward cancellation into the outgoing server-to-server fetch.
+    signal: request.signal,
   });
 
   if (!result.ok) {

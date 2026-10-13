@@ -1,6 +1,14 @@
+"""FastAPI application and lifecycle management."""
+
+from __future__ import annotations
+
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 import structlog
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.concurrency import run_in_threadpool
 
 from apps.api.core.config import get_settings
 from apps.api.routes.classification import router as classification_router
@@ -13,9 +21,37 @@ from apps.api.security.body_limit import InferenceBodyLimitMiddleware
 from apps.api.security.inference import require_inference_access
 from apps.api.security.user_quota import require_verified_user_access
 from apps.api.security.verification_audit import VerificationAuditMiddleware
+from apps.api.services.verification import (
+    shutdown_verification_queue,
+    start_verification_queue,
+    wait_for_verification_idle,
+)
 
 settings = get_settings()
 logger = structlog.get_logger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    """Open local queue on startup; close and drain at lifespan shutdown.
+
+    ASGI servers normally call lifespan shutdown AFTER handling active connections.
+    Docker's stop_grace_period is therefore also needed to allow requests to finish.
+    """
+    start_verification_queue()
+    logger.info(
+        "application_started",
+        application=settings.app_name,
+        environment=settings.app_env,
+        version=settings.app_version,
+    )
+    try:
+        yield
+    finally:
+        shutdown_verification_queue()
+        drained = await run_in_threadpool(wait_for_verification_idle, 5.0)
+        logger.info("application_stopped", inference_drained=drained)
+
 
 app = FastAPI(
     title=settings.app_name,
@@ -24,10 +60,10 @@ app = FastAPI(
         "Explainable News Verification API "
         "with claim classification, evidence retrieval and cross-source verification."
     ),
-    # Do not publish an API schema on the production ingress by default.
     docs_url=None if settings.app_env.casefold() == "production" else "/docs",
     redoc_url=None if settings.app_env.casefold() == "production" else "/redoc",
     openapi_url=None if settings.app_env.casefold() == "production" else "/openapi.json",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -35,8 +71,6 @@ app.add_middleware(
     max_bytes=settings.inference_max_body_bytes,
 )
 
-# Browser traffic uses the Next.js same-origin API proxy. CORS is only needed
-# for local development; production does not need browser access to FastAPI.
 if settings.app_env.casefold() == "development":
     app.add_middleware(
         CORSMiddleware,
@@ -46,8 +80,7 @@ if settings.app_env.casefold() == "development":
         allow_headers=["Content-Type"],
     )
 
-# Add this last so verification failures from body limits, service authorization,
-# and quota dependencies are all recorded without logging request payloads.
+# Keep the audit middleware outermost so errors are recorded without request bodies.
 app.add_middleware(
     VerificationAuditMiddleware, audit_key=settings.internal_api_token, persist_usage=True
 )
@@ -55,8 +88,6 @@ app.add_middleware(
 app.include_router(health_router, prefix="/api/v1")
 app.include_router(usage_statistics_router, prefix="/api/v1")
 
-# Apply the service gate to every expensive route, not only /verify.
-# Multi-source routes retain their separate, existing operator authorization.
 secured = [Depends(require_inference_access)]
 app.include_router(retrieval_router, prefix="/api/v1", dependencies=secured)
 app.include_router(classification_router, prefix="/api/v1", dependencies=secured)
@@ -76,13 +107,3 @@ async def root() -> dict[str, str]:
         "version": settings.app_version,
         "status": "running",
     }
-
-
-@app.on_event("startup")
-async def startup_event() -> None:
-    logger.info(
-        "application_started",
-        application=settings.app_name,
-        environment=settings.app_env,
-        version=settings.app_version,
-    )

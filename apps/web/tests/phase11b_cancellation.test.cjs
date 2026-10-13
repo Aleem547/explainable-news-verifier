@@ -1,0 +1,256 @@
+/* eslint-disable @typescript-eslint/no-require-imports -- Node's CommonJS test harness intentionally uses require(). */
+/**
+ * Run from apps/web:
+ *   node --test tests/phase11b_cancellation.test.cjs
+ *
+ * Uses the TypeScript compiler already installed by the Next.js project.
+ * No Docker, real API calls, OAuth credentials, or new test dependencies.
+ */
+const { test, afterEach } = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const Module = require('node:module');
+const ts = require('typescript');
+
+const ORIGINAL_ENV = Object.fromEntries(
+  ['NODE_ENV', 'API_BASE_URL', 'INTERNAL_API_TOKEN', 'VERIFY_REQUIRE_LOGIN', 'AUTH_SECRET', 'AUTH_GOOGLE_ID', 'AUTH_GOOGLE_SECRET']
+    .map((key) => [key, process.env[key]]),
+);
+const ORIGINAL_FETCH = global.fetch;
+
+function developmentEnv() {
+  process.env.NODE_ENV = 'development';
+  process.env.API_BASE_URL = 'http://127.0.0.1:8001';
+  delete process.env.VERIFY_REQUIRE_LOGIN;
+  process.env.INTERNAL_API_TOKEN = 'local-test-token';
+}
+
+afterEach(() => {
+  global.fetch = ORIGINAL_FETCH;
+  for (const [key, value] of Object.entries(ORIGINAL_ENV)) {
+    if (value === undefined) delete process.env[key];
+    else process.env[key] = value;
+  }
+});
+
+function loadTs(relativeFile, mockedModules = {}) {
+  const filename = path.join(__dirname, '..', 'src', relativeFile);
+  const input = fs.readFileSync(filename, 'utf8');
+  const js = ts.transpileModule(input, {
+    compilerOptions: {
+      module: ts.ModuleKind.CommonJS,
+      target: ts.ScriptTarget.ES2022,
+      esModuleInterop: true,
+    },
+    fileName: filename,
+    reportDiagnostics: true,
+  });
+  const diagnostics = js.diagnostics?.filter((item) => item.category === ts.DiagnosticCategory.Error) ?? [];
+  assert.equal(diagnostics.length, 0, 'TypeScript transpile errors');
+  const mod = new Module(filename, module);
+  mod.filename = filename;
+  mod.paths = Module._nodeModulePaths(path.dirname(filename));
+  const normalRequire = mod.require.bind(mod);
+  mod.require = (specifier) => Object.hasOwn(mockedModules, specifier)
+    ? mockedModules[specifier]
+    : normalRequire(specifier);
+  mod._compile(js.outputText, filename);
+  return mod.exports;
+}
+
+function neverUntilAborted(signal, onAbort) {
+  return new Promise((_resolve, reject) => {
+    function abort() {
+      onAbort?.();
+      const error = new Error('Fetch aborted');
+      error.name = 'AbortError';
+      reject(error);
+    }
+    if (signal.aborted) abort();
+    else signal.addEventListener('abort', abort, { once: true });
+  });
+}
+
+test('successful verification forwards private headers only to the backend', async () => {
+  developmentEnv();
+  let observed;
+  global.fetch = async (url, options) => {
+    observed = { url: url.toString(), options };
+    return Response.json({ verdict: 'SUPPORTING_EVIDENCE' });
+  };
+  const { requestBackend } = loadTs('lib/api/server.ts');
+  const result = await requestBackend('/api/v1/verify', {
+    method: 'POST', body: { claim: 'The Eiffel Tower is in Paris.', top_k: 5 }, verifiedUserId: 'user-1',
+  });
+  assert.equal(result.ok, true);
+  assert.equal(observed.url, 'http://127.0.0.1:8001/api/v1/verify');
+  assert.equal(observed.options.headers['X-Service-Token'], 'local-test-token');
+  assert.equal(observed.options.headers['X-Verified-User'], 'user-1');
+  assert.equal(observed.options.redirect, 'error');
+});
+
+test('disconnect cancels pending server-to-server fetch without marking it as timeout', async () => {
+  developmentEnv();
+  const controller = new AbortController();
+  let backendAborted = false;
+  global.fetch = (_url, init) => neverUntilAborted(init.signal, () => { backendAborted = true; });
+  const { requestBackend } = loadTs('lib/api/server.ts');
+  const pending = requestBackend('/api/v1/verify', {
+    method: 'POST', body: { claim: 'A test claim.', top_k: 5 }, signal: controller.signal,
+    timeoutMs: 10_000,
+  });
+  controller.abort();
+  const result = await pending;
+  assert.equal(result.ok, false);
+  assert.equal(result.status, 499);
+  assert.equal(result.error.code, 'BACKEND_UNAVAILABLE');
+  assert.equal(backendAborted, true);
+});
+
+test('already aborted requests never launch backend fetch', async () => {
+  developmentEnv();
+  const controller = new AbortController();
+  controller.abort();
+  let invoked = false;
+  global.fetch = async () => { invoked = true; throw new Error('must not run'); };
+  const { requestBackend } = loadTs('lib/api/server.ts');
+  const result = await requestBackend('/api/v1/verify', {
+    method: 'POST', signal: controller.signal,
+  });
+  assert.equal(result.status, 499);
+  assert.equal(invoked, false);
+});
+
+test('deadline cancels fetch and returns 504 (not client-cancelled)', async () => {
+  developmentEnv();
+  let backendAborted = false;
+  global.fetch = (_url, init) => neverUntilAborted(init.signal, () => { backendAborted = true; });
+  const { requestBackend } = loadTs('lib/api/server.ts');
+  const result = await requestBackend('/api/v1/verify', {
+    method: 'POST', body: { claim: 'A test claim.' }, timeoutMs: 20,
+  });
+  assert.equal(result.status, 504);
+  assert.equal(result.error.code, 'BACKEND_TIMEOUT');
+  assert.equal(backendAborted, true);
+});
+
+test('backend 429 is retained instead of being mistaken for an outage', async () => {
+  developmentEnv();
+  global.fetch = async () => Response.json({ detail: 'Busy' }, { status: 429 });
+  const { requestBackend } = loadTs('lib/api/server.ts');
+  const result = await requestBackend('/api/v1/verify', { method: 'POST' });
+  assert.equal(result.status, 429);
+  assert.equal(result.error.code, 'BACKEND_ERROR');
+});
+
+const fakeResponse = {
+  claim: 'The Eiffel Tower is in Paris.', verdict: 'SUPPORTING_EVIDENCE',
+  warning: 'Provisional', latency_ms: 14, confidence_threshold: 0.9,
+  retrieved_count: 10, assessed_count: 1, supporting_pages: ['Eiffel_Tower'],
+  refuting_pages: [], evidence: [{ text: 'Paris', page_id: 'Eiffel_Tower', nli_label: 'ENTAILMENT', accepted: true }],
+};
+
+function mockRoute(requestBackend) {
+  return loadTs('app/api/verification/route.ts', {
+    'next/server': {
+      NextResponse: {
+        json(value, init = {}) {
+          return { json: value, status: init.status ?? 200, headers: init.headers ?? {} };
+        },
+      },
+    },
+    '@/lib/api/server': { requestBackend },
+    '@/auth': { auth: async () => ({ user: { id: 'verified-user' } }) },
+  });
+}
+
+function verificationRequest(signal) {
+  return new Request('http://localhost:3000/api/verification', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ claim: 'The Eiffel Tower is in Paris.', top_k: 5 }),
+    signal,
+  });
+}
+
+test('Next.js route forwards its request.signal to backend transport', async () => {
+  developmentEnv();
+  let forwarded;
+  const { POST } = mockRoute(async (_path, options) => {
+    forwarded = options;
+    return { ok: true, status: 200, data: fakeResponse };
+  });
+  const controller = new AbortController();
+  const request = verificationRequest(controller.signal);
+  const response = await POST(request);
+  assert.equal(response.status, 200);
+  assert.equal(forwarded.signal, request.signal);
+  assert.equal(forwarded.verifiedUserId, undefined);
+  assert.deepEqual(forwarded.body, { claim: 'The Eiffel Tower is in Paris.', top_k: 5 });
+});
+
+test('already cancelled Next.js request is not forwarded', async () => {
+  developmentEnv();
+  let forwarded = false;
+  const { POST } = mockRoute(async () => {
+    forwarded = true;
+    return { ok: true, status: 200, data: fakeResponse };
+  });
+  const controller = new AbortController();
+  controller.abort();
+  const response = await POST(verificationRequest(controller.signal));
+  assert.equal(response.status, 499);
+  assert.equal(forwarded, false);
+});
+
+test('production route still rejects missing security configuration', async () => {
+  developmentEnv();
+  process.env.NODE_ENV = 'production';
+  delete process.env.AUTH_SECRET;
+  delete process.env.AUTH_GOOGLE_ID;
+  delete process.env.AUTH_GOOGLE_SECRET;
+  let forwarded = false;
+  const { POST } = mockRoute(async () => { forwarded = true; return { ok: true, status: 200, data: fakeResponse }; });
+  const response = await POST(verificationRequest(new AbortController().signal));
+  assert.equal(response.status, 503);
+  assert.equal(forwarded, false);
+});
+
+test('abort during response.json() is classified as client cancellation', async () => {
+  developmentEnv();
+  const controller = new AbortController();
+  let responseBodyStarted;
+  const bodyStarted = new Promise((resolve) => { responseBodyStarted = resolve; });
+  global.fetch = async (_url, init) => ({
+    ok: true,
+    status: 200,
+    json: () => {
+      responseBodyStarted();
+      return neverUntilAborted(init.signal);
+    },
+  });
+  const { requestBackend } = loadTs('lib/api/server.ts');
+  const pending = requestBackend('/api/v1/verify', {
+    method: 'POST', signal: controller.signal,
+  });
+  await bodyStarted;
+  controller.abort();
+  const result = await pending;
+  assert.equal(result.status, 499);
+});
+
+test('production transport rejects insecure HTTP backend URLs', async () => {
+  developmentEnv();
+  process.env.NODE_ENV = 'production';
+  process.env.INTERNAL_API_TOKEN = '0123456789abcdef0123456789abcdef';
+  let invoked = false;
+  global.fetch = async () => { invoked = true; throw new Error('must not run'); };
+  const { requestBackend } = loadTs('lib/api/server.ts');
+  const result = await requestBackend('/api/v1/verify', {
+    method: 'POST', verifiedUserId: 'user-1',
+  });
+  assert.equal(result.status, 503);
+  assert.equal(result.error.code, 'BACKEND_NOT_CONFIGURED');
+  assert.equal(invoked, false);
+});
