@@ -1,0 +1,7 @@
+﻿services:
+  api:
+    volumes:
+      - type: bind
+        source: ${FEVER_SORTED_PARQUET_HOST_PATH:?required}
+        target: /app/data/processed/fever/wiki_sentences.parquet
+        read_only: true
