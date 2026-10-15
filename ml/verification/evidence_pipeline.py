@@ -1,7 +1,8 @@
 """Orchestrate existing retrieval, calibrated NLI and auditable page aggregation."""
 
+import logging
 import math
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field, replace
 from enum import StrEnum
 from time import perf_counter
@@ -20,6 +21,8 @@ from ml.verification.evidence_aggregation import (
     contribution_role,
 )
 from ml.verification.evidence_quality import ExcludedEvidence, screen_evidence
+
+logger = logging.getLogger(__name__)
 
 
 class EvidenceDecisionReason(StrEnum):
@@ -133,6 +136,7 @@ class ClaimVerificationPipeline:
         nli_predictor: NliPredictor,
         confidence_threshold: float = 0.90,
         enforce_subject_grounding: bool = True,
+        stage_observer: Callable[[dict[str, float | int]], None] | None = None,
     ) -> None:
         if not 0.0 < confidence_threshold <= 1.0:
             raise ValueError("confidence_threshold must be in (0, 1].")
@@ -140,6 +144,7 @@ class ClaimVerificationPipeline:
         self.nli_predictor = nli_predictor
         self.confidence_threshold = confidence_threshold
         self.enforce_subject_grounding = enforce_subject_grounding
+        self.stage_observer = stage_observer
 
     def verify(self, claim: str, *, top_k: int = 5) -> ClaimVerification:
         normalized_claim = claim.strip()
@@ -151,13 +156,16 @@ class ClaimVerificationPipeline:
         started = perf_counter()
         candidate_count = min(20, top_k * 2)
         retrieved = self.retriever.retrieve(normalized_claim, top_k=candidate_count)
+        retrieval_finished = perf_counter()
         quality = screen_evidence(normalized_claim, retrieved, top_k=top_k)
+        quality_finished = perf_counter()
         usable = quality.selected
         distributions = (
             self.nli_predictor.predict(normalized_claim, [item.text for item in usable])
             if usable
             else []
         )
+        nli_finished = perf_counter()
         if len(distributions) != len(usable):
             raise ValueError("NLI predictor returned an incorrect number of results.")
 
@@ -209,12 +217,15 @@ class ClaimVerificationPipeline:
                 )
             )
 
+        decisions_finished = perf_counter()
         summary = aggregate_evidence(assessments)
+        aggregation_finished = perf_counter()
         annotated = [
             replace(item, contribution_role=contribution_role(item, summary))
             for item in assessments
         ]
-        return ClaimVerification(
+        annotation_finished = perf_counter()
+        result = ClaimVerification(
             claim=normalized_claim,
             verdict=EvidenceVerdict(summary.verdict),
             confidence_threshold=self.confidence_threshold,
@@ -233,3 +244,29 @@ class ClaimVerificationPipeline:
             primary_evidence_count=summary.primary_count,
             admissibility_blocked_count=blocked_count,
         )
+
+        # Optional, non-invasive stage measurements: no claim or evidence text is logged.
+        # Observer failures must never alter a verification result or its verdict.
+        if self.stage_observer is not None:
+            try:
+                self.stage_observer(
+                    {
+                        "retrieval_ms": round((retrieval_finished - started) * 1000, 2),
+                        "quality_ms": round((quality_finished - retrieval_finished) * 1000, 2),
+                        "nli_ms": round((nli_finished - quality_finished) * 1000, 2),
+                        "decision_ms": round((decisions_finished - nli_finished) * 1000, 2),
+                        "aggregation_ms": round(
+                            (aggregation_finished - decisions_finished) * 1000, 2
+                        ),
+                        "annotation_ms": round(
+                            (annotation_finished - aggregation_finished) * 1000, 2
+                        ),
+                        "measured_total_ms": round((annotation_finished - started) * 1000, 2),
+                        "retrieved_count": len(retrieved),
+                        "assessed_count": len(annotated),
+                        "top_k": top_k,
+                    }
+                )
+            except Exception:
+                logger.exception("Verification stage timing observer failed")
+        return result

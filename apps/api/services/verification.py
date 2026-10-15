@@ -132,9 +132,35 @@ def _build_pipeline() -> ClaimVerificationPipeline:
     from ml.verification.evidence_pipeline import ClaimVerificationPipeline
     from ml.verification.nli_inference import CalibratedNliVerifier
 
+    # Profiling is opt-in. Model initialization remains lazy and serialized by
+    # the existing inference slot. This patch does not change admission logic.
+    profile_stages = os.getenv("VERIFICATION_STAGE_TIMING", "0") == "1"
+    init_started = monotonic() if profile_stages else None
+    retriever = get_retrieval_pipeline()
+    retrieval_loaded = monotonic() if profile_stages else None
+    nli_predictor = CalibratedNliVerifier(device="cpu")
+    nli_loaded = monotonic() if profile_stages else None
+
+    if profile_stages:
+        assert init_started is not None
+        assert retrieval_loaded is not None
+        assert nli_loaded is not None
+        logger.info(
+            "verification_model_initialization_timing",
+            retrieval_init_ms=round((retrieval_loaded - init_started) * 1000, 2),
+            nli_init_ms=round((nli_loaded - retrieval_loaded) * 1000, 2),
+            total_init_ms=round((nli_loaded - init_started) * 1000, 2),
+        )
+        # Only aggregate timings and counts; never emit claim text or user data.
+        return ClaimVerificationPipeline(
+            retriever=retriever,
+            nli_predictor=nli_predictor,
+            confidence_threshold=0.90,
+            stage_observer=lambda stages: logger.info("verification_stage_timing", **stages),
+        )
     return ClaimVerificationPipeline(
-        retriever=get_retrieval_pipeline(),
-        nli_predictor=CalibratedNliVerifier(device="cpu"),
+        retriever=retriever,
+        nli_predictor=nli_predictor,
         confidence_threshold=0.90,
     )
 
