@@ -1,9 +1,9 @@
 # Phase 11 — Development Validation & Closeout Report
 
-**Project:** Explainable News Verifier  
-**Report date:** 2026-10-16  
-**Environment:** Local Windows/PowerShell development environment; Docker Compose; FastAPI; PostgreSQL; Redis; Qdrant; FEVER-derived Wikipedia sentence corpus  
-**Validation scope:** Phase 11 development tests, retrieval optimization, evidence-processing safeguards, API checks, and isolated rollback exercise  
+**Project:** Explainable News Verifier
+**Report date:** 2026-10-16
+**Environment:** Local Windows/PowerShell development environment; Docker Compose; FastAPI; PostgreSQL; Redis; Qdrant; FEVER-derived Wikipedia sentence corpus
+**Validation scope:** Phase 11 development tests, retrieval optimization, evidence-processing safeguards, API checks, and isolated rollback exercise
 **Disposition:** **Scoped development validation PASSED. Production cutover NOT CERTIFIED.**
 
 ## 1. Executive summary
