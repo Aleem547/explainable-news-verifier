@@ -1,8 +1,10 @@
+
 import re
 from functools import lru_cache
 from pathlib import Path
 from time import perf_counter
 
+from apps.api.core.config import get_settings
 from apps.api.schemas.retrieval import (
     EvidenceResponse,
     RetrievalResponse,
@@ -13,6 +15,7 @@ from ml.retrieval.factory import (
 from ml.retrieval.pipeline import (
     EvidenceRetrievalPipeline,
 )
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
@@ -57,9 +60,17 @@ def clean_fever_text(
 
 @lru_cache(maxsize=1)
 def get_retrieval_pipeline() -> EvidenceRetrievalPipeline:
+    # Phase 12A: Load environment-based DuckDB settings
+    settings = get_settings()
+
     return build_fever_retrieval_pipeline(
         PROJECT_ROOT,
         device="cpu",
+        duckdb_threads=settings.duckdb_threads,
+        duckdb_memory_limit_mb=settings.duckdb_memory_limit_mb,
+        duckdb_max_temp_directory_size_mb=(
+            settings.duckdb_max_temp_directory_size_mb
+        ),
     )
 
 
@@ -87,13 +98,13 @@ def run_retrieval(
         EvidenceResponse(
             rank=result.rank,
             page_id=result.page_id,
-            sentence_id=(result.sentence_id),
+            sentence_id=result.sentence_id,
             text=clean_fever_text(result.text),
-            page_rank=(result.page_rank),
-            bm25_score=(result.bm25_score),
-            dense_score=(result.dense_score),
-            rrf_score=(result.rrf_score),
-            cross_encoder_score=(result.cross_encoder_score),
+            page_rank=result.page_rank,
+            bm25_score=result.bm25_score,
+            dense_score=result.dense_score,
+            rrf_score=result.rrf_score,
+            cross_encoder_score=result.cross_encoder_score,
         )
         for result in results
     ]
