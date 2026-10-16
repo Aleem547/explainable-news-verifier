@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "phase": "11C.3",
+  "scenario": "authenticated browser verification; read-only Docker sampling",
+  "start_utc": "2026-10-14T16:58:53Z",
+  "end_utc": "2026-10-14T17:03:54Z",
+  "elapsed_seconds": 301.09,
+  "docker_service": "api",
+  "requested_sample_interval_seconds": 2.0,
+  "sample_count": 95,
+  "sample_failures": 0,
+  "latency_seconds": {
+    "count": 0,
+    "values": [],
+    "mean": null,
+    "min": null,
+    "max": null,
+    "p50": null,
+    "p90": null,
+    "p95": null,
+    "percentile_method": "nearest_rank"
+  },
+  "docker_resource_samples": {
+    "mean_cpu_percent": 5.96,
+    "max_cpu_percent": 99.81,
+    "mean_memory_mib": 746.66,
+    "max_memory_mib": 758.9,
+    "max_pids": 45,
+    "last_observed_memory_limit_mib": 3072.0
+  },
+  "request_http_status_counts": {},
+  "request_audit_status_counts": {},
+  "queue_event_counts": {},
+  "notes": [
+    "Manual browser submissions do not measure sustainable maximum throughput.",
+    "API verification_completed latency is backend inference latency, not browser end-to-end time.",
+    "CPU and memory maxima are peaks among snapshots, not guaranteed process maxima.",
+    "Small-sample percentiles (especially p95) are not reliable capacity estimates.",
+    "HTTP and audit statuses are independent views of requests; do not add their counts.",
+    "Docker CPU percentages may exceed 100% for multi-core workloads."
+  ]
+}

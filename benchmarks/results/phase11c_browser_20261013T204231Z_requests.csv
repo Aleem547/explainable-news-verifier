@@ -1,0 +1,2 @@
+run,timestamp_utc,http_status,ok,verdict,browser_ms,backend_ms,retrieved_count,assessed_count,error_code,error
+"1","2026-10-13T20:42:34.524Z","200","true","REFUTING_EVIDENCE","27786.372","27188.757","10","5","",""

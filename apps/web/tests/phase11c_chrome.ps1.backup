@@ -1,0 +1,55 @@
+<#
+  Phase 11C.3 Chrome helper for Windows PowerShell.
+  Use normal Chrome for Google OAuth, then restart SAME dedicated profile
+  with localhost-only debugging for Playwright to attach AFTER sign-in.
+
+  From apps/web:
+    .\tests\phase11c_chrome.ps1 -Mode Login
+    .\tests\phase11c_chrome.ps1 -Mode Benchmark
+#>
+param(
+    [Parameter(Mandatory=$true)]
+    [ValidateSet('Login', 'Benchmark')]
+    [string]$Mode
+)
+
+$ErrorActionPreference = 'Stop'
+$candidates = @(
+    (Join-Path $env:ProgramFiles 'Google\Chrome\Application\chrome.exe'),
+    (Join-Path ${env:ProgramFiles(x86)} 'Google\Chrome\Application\chrome.exe'),
+    (Join-Path $env:LOCALAPPDATA 'Google\Chrome\Application\chrome.exe')
+)
+$chrome = $candidates | Where-Object { $_ -and (Test-Path -LiteralPath $_) } | Select-Object -First 1
+if (-not $chrome) {
+    throw 'Google Chrome was not found. Install Chrome normally or update the executable path in this script.'
+}
+
+$profile = Join-Path $env:LOCALAPPDATA 'ExplainableNewsVerifier\Phase11CChromeProfile'
+New-Item -ItemType Directory -Force -Path $profile | Out-Null
+
+# The isolated profile must not be the real/default Chrome profile.
+$arguments = @(
+    ('--user-data-dir="' + $profile + '"'),
+    '--no-first-run',
+    '--new-window'
+)
+
+if ($Mode -eq 'Login') {
+    Write-Host 'Opening NORMAL Chrome (no automation, no remote debugging).' -ForegroundColor Cyan
+    Write-Host 'Sign in at /account. Confirm you are signed in, then CLOSE this dedicated Chrome window.'
+    Write-Host 'Keep your personal Chrome browser profile separate.'
+    Start-Process -FilePath $chrome -ArgumentList ($arguments + @('http://localhost:3000/account'))
+} else {
+    Write-Host 'Make sure the Phase 11C login Chrome window was CLOSED first.' -ForegroundColor Yellow
+    # CDP provides full browser access. Never bind this interface to a public address.
+    $arguments += @('--remote-debugging-port=9237', '--remote-debugging-address=127.0.0.1')
+    Start-Process -FilePath $chrome -ArgumentList ($arguments + @('http://localhost:3000/verify'))
+    Start-Sleep -Seconds 3
+    try {
+        $info = Invoke-RestMethod -Uri 'http://127.0.0.1:9237/json/version' -TimeoutSec 3
+        Write-Host ('Chrome debugging available locally: ' + $info.Browser) -ForegroundColor Green
+        Write-Host 'Now run: node .\tests\phase11c_browser_benchmark.mjs --runs 1'
+    } catch {
+        Write-Warning 'Could not access Chrome debugging on 127.0.0.1:9237. Close the dedicated Chrome profile completely, then run -Mode Benchmark again.'
+    }
+}

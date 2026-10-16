@@ -1,0 +1,19 @@
+﻿{
+    "Phase":  "11C.3",
+    "Scenario":  "Sequential warm verification",
+    "EvidenceLimit":  5,
+    "Requests":  5,
+    "AverageSeconds":  13.562,
+    "MedianSeconds":  13.353,
+    "MinimumSeconds":  12.865,
+    "MaximumSeconds":  15.006,
+    "CpuLimit":  8,
+    "MemoryLimitGiB":  3,
+    "MeasurementsSeconds":  [
+                                12.8652450619993,
+                                15.0060209300009,
+                                13.0470359040009,
+                                13.5388287699989,
+                                13.3529324840001
+                            ]
+}

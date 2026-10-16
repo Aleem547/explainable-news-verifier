@@ -1,0 +1,114 @@
+{
+  "schema_version": 3,
+  "phase": "11C.3",
+  "scenario": "Authenticated sequential Chrome-over-CDP verification",
+  "started_utc": "2026-10-13T20:46:00.933Z",
+  "finished_utc": "2026-10-13T20:47:40.232Z",
+  "website_origin": "http://localhost:3000",
+  "requested_runs": 5,
+  "claim_length": 47,
+  "evidence_limit": 5,
+  "expected_verdict": "REFUTING_EVIDENCE",
+  "fatal_error": null,
+  "summary": {
+    "attempted": 5,
+    "successful": 5,
+    "failed": 0,
+    "http_status_counts": {
+      "200": 5
+    },
+    "browser_latency": {
+      "count": 5,
+      "mean_ms": 17433.405,
+      "min_ms": 15546.357,
+      "p50_ms": 17206.794,
+      "p90_ms": 19392.372,
+      "p95_ms": 19392.372,
+      "max_ms": 19392.372,
+      "percentile_method": "nearest-rank"
+    },
+    "backend_latency": {
+      "count": 5,
+      "mean_ms": 17177.77,
+      "min_ms": 15316.449,
+      "p50_ms": 16967.452,
+      "p90_ms": 19050.737,
+      "p95_ms": 19050.737,
+      "max_ms": 19050.737,
+      "percentile_method": "nearest-rank"
+    }
+  },
+  "records": [
+    {
+      "run": 1,
+      "timestamp_utc": "2026-10-13T20:46:03.923Z",
+      "http_status": 200,
+      "ok": true,
+      "verdict": "REFUTING_EVIDENCE",
+      "browser_ms": 19392.372,
+      "backend_ms": 19050.737,
+      "retrieved_count": 10,
+      "assessed_count": 5,
+      "error_code": null,
+      "error": null
+    },
+    {
+      "run": 2,
+      "timestamp_utc": "2026-10-13T20:46:25.589Z",
+      "http_status": 200,
+      "ok": true,
+      "verdict": "REFUTING_EVIDENCE",
+      "browser_ms": 18159.158,
+      "backend_ms": 17918.153,
+      "retrieved_count": 10,
+      "assessed_count": 5,
+      "error_code": null,
+      "error": null
+    },
+    {
+      "run": 3,
+      "timestamp_utc": "2026-10-13T20:46:45.961Z",
+      "http_status": 200,
+      "ok": true,
+      "verdict": "REFUTING_EVIDENCE",
+      "browser_ms": 16862.344,
+      "backend_ms": 16636.06,
+      "retrieved_count": 10,
+      "assessed_count": 5,
+      "error_code": null,
+      "error": null
+    },
+    {
+      "run": 4,
+      "timestamp_utc": "2026-10-13T20:47:05.027Z",
+      "http_status": 200,
+      "ok": true,
+      "verdict": "REFUTING_EVIDENCE",
+      "browser_ms": 17206.794,
+      "backend_ms": 16967.452,
+      "retrieved_count": 10,
+      "assessed_count": 5,
+      "error_code": null,
+      "error": null
+    },
+    {
+      "run": 5,
+      "timestamp_utc": "2026-10-13T20:47:24.416Z",
+      "http_status": 200,
+      "ok": true,
+      "verdict": "REFUTING_EVIDENCE",
+      "browser_ms": 15546.357,
+      "backend_ms": 15316.449,
+      "retrieved_count": 10,
+      "assessed_count": 5,
+      "error_code": null,
+      "error": null
+    }
+  ],
+  "notes": [
+    "Real application login and quotas remain enforced.",
+    "Never store CDP credentials, cookies, sessions, or user identifiers in reports.",
+    "Browser timings include local web UI and proxy overhead, not only inference.",
+    "Five requests are insufficient for reliable tail-latency or capacity estimates."
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "schema_version": 3,
+  "phase": "11C.3",
+  "scenario": "Authenticated sequential Chrome-over-CDP verification",
+  "started_utc": "2026-10-13T20:35:02.965Z",
+  "finished_utc": "2026-10-13T20:35:03.017Z",
+  "website_origin": "http://localhost:3000",
+  "requested_runs": 1,
+  "claim_length": 47,
+  "evidence_limit": 5,
+  "expected_verdict": "REFUTING_EVIDENCE",
+  "fatal_error": "browserType.connectOverCDP: connect ECONNREFUSED 127.0.0.1:9237\nCall log:\n\u001b[2m  - <ws preparing> retrieving websocket url from http://127.0.0.1:9237\u001b[22m\n",
+  "summary": {
+    "attempted": 0,
+    "successful": 0,
+    "failed": 0,
+    "http_status_counts": {},
+    "browser_latency": {
+      "count": 0,
+      "mean_ms": null,
+      "min_ms": null,
+      "p50_ms": null,
+      "p90_ms": null,
+      "p95_ms": null,
+      "max_ms": null,
+      "percentile_method": "nearest-rank"
+    },
+    "backend_latency": {
+      "count": 0,
+      "mean_ms": null,
+      "min_ms": null,
+      "p50_ms": null,
+      "p90_ms": null,
+      "p95_ms": null,
+      "max_ms": null,
+      "percentile_method": "nearest-rank"
+    }
+  },
+  "records": [],
+  "notes": [
+    "Real application login and quotas remain enforced.",
+    "Never store CDP credentials, cookies, sessions, or user identifiers in reports.",
+    "Browser timings include local web UI and proxy overhead, not only inference.",
+    "Five requests are insufficient for reliable tail-latency or capacity estimates."
+  ]
+}

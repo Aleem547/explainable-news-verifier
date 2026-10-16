@@ -1,0 +1,44 @@
+{
+  "schema_version": 2,
+  "phase": "11C.4",
+  "scenario": "controlled authenticated simultaneous browser fetch requests",
+  "started_utc": "2026-10-14T17:33:03.025Z",
+  "ended_utc": "2026-10-14T17:33:05.328Z",
+  "origin": "http://localhost:3000",
+  "concurrency": 2,
+  "rounds_planned": 2,
+  "requests_planned": 4,
+  "requests_attempted": 0,
+  "success_count": 0,
+  "statuses": {},
+  "top_k": 5,
+  "expected_verdict": "REFUTING_EVIDENCE",
+  "failure": "No authenticated localhost tab/context was found via CDP. In the SAME dedicated benchmark Chrome, open http://localhost:3000/api/auth/session and confirm a user.id, then keep that tab open. Do not sign in through debug mode or disable authentication.",
+  "browser_request_latency": {
+    "count": 0,
+    "mean_ms": null,
+    "min_ms": null,
+    "p50_ms": null,
+    "p95_ms": null,
+    "max_ms": null,
+    "method": "nearest-rank"
+  },
+  "backend_inference_latency": {
+    "count": 0,
+    "mean_ms": null,
+    "min_ms": null,
+    "p50_ms": null,
+    "p95_ms": null,
+    "max_ms": null,
+    "method": "nearest-rank"
+  },
+  "waves": [],
+  "records": [],
+  "notes": [
+    "Uses an authenticated Chrome tab from the user's dedicated local test profile.",
+    "No user identifiers, emails, cookies, tokens or evidence text are stored.",
+    "HTTP 429 may indicate rate limiting or queue admission: inspect backend logs.",
+    "No retries; a failing wave prevents additional waves.",
+    "This small test is not a throughput or production p95 estimate."
+  ]
+}

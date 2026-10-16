@@ -1,0 +1,78 @@
+{
+  "schema_version": 2,
+  "phase": "11C.4",
+  "scenario": "controlled authenticated simultaneous browser fetch requests",
+  "started_utc": "2026-10-14T17:47:28.505Z",
+  "ended_utc": "2026-10-14T17:48:23.473Z",
+  "origin": "http://localhost:3000",
+  "concurrency": 2,
+  "rounds_planned": 2,
+  "requests_planned": 4,
+  "requests_attempted": 2,
+  "success_count": 1,
+  "statuses": {
+    "200": 1,
+    "429": 1
+  },
+  "top_k": 5,
+  "expected_verdict": "REFUTING_EVIDENCE",
+  "failure": "Round 1 contained failed or rejected requests. No retries or additional waves.",
+  "browser_request_latency": {
+    "count": 1,
+    "mean_ms": 54302.9,
+    "min_ms": 54302.9,
+    "p50_ms": 54302.9,
+    "p95_ms": 54302.9,
+    "max_ms": 54302.9,
+    "method": "nearest-rank"
+  },
+  "backend_inference_latency": {
+    "count": 1,
+    "mean_ms": 16761.339,
+    "min_ms": 16761.339,
+    "p50_ms": 16761.339,
+    "p95_ms": 16761.339,
+    "max_ms": 16761.339,
+    "method": "nearest-rank"
+  },
+  "waves": [
+    {
+      "wave": 1,
+      "wall_ms": 54303.6,
+      "requests": 2
+    }
+  ],
+  "records": [
+    {
+      "wave": 1,
+      "request": 1,
+      "http_status": 200,
+      "success": true,
+      "verdict": "REFUTING_EVIDENCE",
+      "elapsed_ms": 54302.9,
+      "backend_ms": 16761.339,
+      "launch_offset_ms": 0.6,
+      "error_code": null,
+      "transport_error": null
+    },
+    {
+      "wave": 1,
+      "request": 2,
+      "http_status": 429,
+      "success": false,
+      "verdict": null,
+      "elapsed_ms": 21689.1,
+      "backend_ms": null,
+      "launch_offset_ms": 4,
+      "error_code": "BACKEND_ERROR",
+      "transport_error": null
+    }
+  ],
+  "notes": [
+    "Uses an authenticated Chrome tab from the user's dedicated local test profile.",
+    "No user identifiers, emails, cookies, tokens or evidence text are stored.",
+    "HTTP 429 may indicate rate limiting or queue admission: inspect backend logs.",
+    "No retries; a failing wave prevents additional waves.",
+    "This small test is not a throughput or production p95 estimate."
+  ]
+}

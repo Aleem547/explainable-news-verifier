@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "phase": "11C.4",
+  "scenario": "bounded concurrent authenticated POSTs from a local browser",
+  "started_utc": "2026-10-14T16:59:24.981Z",
+  "completed_utc": "2026-10-14T16:59:25.603Z",
+  "local_origin": "http://localhost:3000",
+  "concurrency": 2,
+  "rounds_planned": 2,
+  "requests_planned": 4,
+  "requests_completed": 0,
+  "expected_verdict": "REFUTING_EVIDENCE",
+  "top_k": 5,
+  "failure": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/verify\nCall log:\n\u001b[2m  - navigating to \"http://localhost:3000/verify\", waiting until \"domcontentloaded\"\u001b[22m\n",
+  "statuses": {},
+  "success_count": 0,
+  "browser_request_latency": {
+    "count": 0,
+    "mean_ms": null,
+    "min_ms": null,
+    "p50_ms": null,
+    "p95_ms": null,
+    "max_ms": null,
+    "method": "nearest-rank"
+  },
+  "backend_inference_latency": {
+    "count": 0,
+    "mean_ms": null,
+    "min_ms": null,
+    "p50_ms": null,
+    "p95_ms": null,
+    "max_ms": null,
+    "method": "nearest-rank"
+  },
+  "waves": [],
+  "requests": [],
+  "notes": [
+    "Only localhost is contacted; authentication, quotas and queue remain enabled.",
+    "No session identifiers, cookies, emails, tokens or evidence text are recorded.",
+    "Requests in each wave are initiated together through standard same-origin fetch.",
+    "HTTP 429 may be rate limiting OR queue admission rejection; check server logs to distinguish.",
+    "End-to-end request latency is not a direct measurement of queue wait time.",
+    "Small-sample p95 cannot be used as a production SLA or capacity estimate.",
+    "Do not treat a completed 200 with an unexpected verdict as a passed correctness check."
+  ]
+}

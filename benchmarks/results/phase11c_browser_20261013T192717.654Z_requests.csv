@@ -1,0 +1,5 @@
+run,timestamp_utc,http_status,ok,verdict,browser_ms,backend_ms,retrieved_count,assessed_count,error
+"1","2026-10-13T19:27:19.843Z","","false","","15849.363","","","","locator.click: Timeout 15000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('button', { name: /verify claim/i })[22m
+[2m    - locator resolved to <button disabled type=""submit"" class=""inline-flex items-center justify-center gap-2 rounded-xl bg"

@@ -1,0 +1,48 @@
+{
+  "schema_version": 2,
+  "phase": "11C.3",
+  "scenario": "local authenticated sequential browser verification",
+  "started_utc": "2026-10-13T20:21:22.029Z",
+  "finished_utc": "2026-10-13T20:24:38.904Z",
+  "base_url": "http://localhost:3000",
+  "planned_runs": 1,
+  "evidence_limit": 5,
+  "claim_length": 47,
+  "expected_verdict": "REFUTING_EVIDENCE",
+  "failure": "Aborted with Ctrl+C",
+  "statistics": {
+    "attempted": 0,
+    "successful": 0,
+    "failed": 0,
+    "http_status_counts": {},
+    "browser_end_to_end": {
+      "count": 0,
+      "mean_ms": null,
+      "min_ms": null,
+      "p50_ms": null,
+      "p90_ms": null,
+      "p95_ms": null,
+      "max_ms": null,
+      "percentile_method": "nearest-rank"
+    },
+    "backend_inference": {
+      "count": 0,
+      "mean_ms": null,
+      "min_ms": null,
+      "p50_ms": null,
+      "p90_ms": null,
+      "p95_ms": null,
+      "max_ms": null,
+      "percentile_method": "nearest-rank"
+    }
+  },
+  "records": [],
+  "notes": [
+    "The app authentication and quotas are not bypassed.",
+    "Report files contain no cookies, tokens, IDs, or session contents.",
+    "A separate Chromium browser profile persists locally outside the Git repository.",
+    "Browser timing starts immediately before clicking Verify and includes proxy/response overhead.",
+    "Backend timing is the API response latency_ms field.",
+    "Five requests cannot establish a reliable p95 or sustainable throughput."
+  ]
+}

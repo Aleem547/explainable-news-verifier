@@ -1,0 +1,2 @@
+run,timestamp_utc,http_status,ok,verdict,browser_ms,backend_ms,retrieved_count,assessed_count,error
+"1","2026-10-13T19:52:16.849Z","401","false","","273.386","","","","Unexpected HTTP status or verdict (expected 200/REFUTING_EVIDENCE)."

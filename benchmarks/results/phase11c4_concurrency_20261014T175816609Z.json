@@ -1,0 +1,77 @@
+{
+  "schema_version": 2,
+  "phase": "11C.4",
+  "scenario": "controlled authenticated simultaneous browser fetch requests",
+  "started_utc": "2026-10-14T17:58:16.609Z",
+  "ended_utc": "2026-10-14T17:58:44.746Z",
+  "origin": "http://localhost:3000",
+  "concurrency": 2,
+  "rounds_planned": 1,
+  "requests_planned": 2,
+  "requests_attempted": 2,
+  "success_count": 2,
+  "statuses": {
+    "200": 2
+  },
+  "top_k": 5,
+  "expected_verdict": "REFUTING_EVIDENCE",
+  "failure": null,
+  "browser_request_latency": {
+    "count": 2,
+    "mean_ms": 20846.6,
+    "min_ms": 14279.3,
+    "p50_ms": 14279.3,
+    "p95_ms": 27413.9,
+    "max_ms": 27413.9,
+    "method": "nearest-rank"
+  },
+  "backend_inference_latency": {
+    "count": 2,
+    "mean_ms": 13617.357,
+    "min_ms": 13132.691,
+    "p50_ms": 13132.691,
+    "p95_ms": 14102.023,
+    "max_ms": 14102.023,
+    "method": "nearest-rank"
+  },
+  "waves": [
+    {
+      "wave": 1,
+      "wall_ms": 27414.1,
+      "requests": 2
+    }
+  ],
+  "records": [
+    {
+      "wave": 1,
+      "request": 1,
+      "http_status": 200,
+      "success": true,
+      "verdict": "REFUTING_EVIDENCE",
+      "elapsed_ms": 27413.9,
+      "backend_ms": 13132.691,
+      "launch_offset_ms": 0.2,
+      "error_code": null,
+      "transport_error": null
+    },
+    {
+      "wave": 1,
+      "request": 2,
+      "http_status": 200,
+      "success": true,
+      "verdict": "REFUTING_EVIDENCE",
+      "elapsed_ms": 14279.3,
+      "backend_ms": 14102.023,
+      "launch_offset_ms": 2.2,
+      "error_code": null,
+      "transport_error": null
+    }
+  ],
+  "notes": [
+    "Uses an authenticated Chrome tab from the user's dedicated local test profile.",
+    "No user identifiers, emails, cookies, tokens or evidence text are stored.",
+    "HTTP 429 may indicate rate limiting or queue admission: inspect backend logs.",
+    "No retries; a failing wave prevents additional waves.",
+    "This small test is not a throughput or production p95 estimate."
+  ]
+}

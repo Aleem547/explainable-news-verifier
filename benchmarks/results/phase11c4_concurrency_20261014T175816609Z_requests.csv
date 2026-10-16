@@ -1,0 +1,3 @@
+wave,request,http_status,success,verdict,elapsed_ms,backend_ms,launch_offset_ms,error_code,transport_error
+"1","1","200","true","REFUTING_EVIDENCE","27413.9","13132.691","0.2","",""
+"1","2","200","true","REFUTING_EVIDENCE","14279.3","14102.023","2.2","",""

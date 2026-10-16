@@ -1,0 +1,6 @@
+run,timestamp_utc,http_status,ok,verdict,browser_ms,backend_ms,retrieved_count,assessed_count,error_code,error
+"1","2026-10-13T20:46:03.923Z","200","true","REFUTING_EVIDENCE","19392.372","19050.737","10","5","",""
+"2","2026-10-13T20:46:25.589Z","200","true","REFUTING_EVIDENCE","18159.158","17918.153","10","5","",""
+"3","2026-10-13T20:46:45.961Z","200","true","REFUTING_EVIDENCE","16862.344","16636.06","10","5","",""
+"4","2026-10-13T20:47:05.027Z","200","true","REFUTING_EVIDENCE","17206.794","16967.452","10","5","",""
+"5","2026-10-13T20:47:24.416Z","200","true","REFUTING_EVIDENCE","15546.357","15316.449","10","5","",""

@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "phase": "11C.3",
+  "scenario": "local authenticated sequential browser verification",
+  "started_utc": "2026-10-13T19:27:17.654Z",
+  "finished_utc": "2026-10-13T19:27:36.681Z",
+  "base_url": "http://localhost:3000",
+  "planned_runs": 5,
+  "claim_length": 47,
+  "evidence_limit": 5,
+  "expected_verdict": "REFUTING_EVIDENCE",
+  "statistics": {
+    "requested": 1,
+    "successful": 0,
+    "unsuccessful": 1,
+    "http_status_counts": {
+      "no-response": 1
+    },
+    "browser_end_to_end": {
+      "count": 0,
+      "mean_ms": null,
+      "min_ms": null,
+      "p50_ms": null,
+      "p90_ms": null,
+      "p95_ms": null,
+      "max_ms": null,
+      "percentile_method": "nearest-rank"
+    },
+    "backend_inference": {
+      "count": 0,
+      "mean_ms": null,
+      "min_ms": null,
+      "p50_ms": null,
+      "p90_ms": null,
+      "p95_ms": null,
+      "max_ms": null,
+      "percentile_method": "nearest-rank"
+    }
+  },
+  "records": [
+    {
+      "run": 1,
+      "timestamp_utc": "2026-10-13T19:27:19.843Z",
+      "http_status": null,
+      "ok": false,
+      "verdict": null,
+      "browser_ms": 15849.363,
+      "backend_ms": null,
+      "retrieved_count": null,
+      "assessed_count": null,
+      "error": "locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /verify claim/i })\u001b[22m\n\u001b[2m    - locator resolved to <button disabled type=\"submit\" class=\"inline-flex items-center justify-center gap-2 rounded-xl bg"
+    }
+  ],
+  "notes": [
+    "Browser end-to-end time includes UI and proxy overhead; backend inference time does not.",
+    "Only successfully validated responses contribute to latency percentiles.",
+    "Small samples do not establish capacity, stable p95, or sustainable throughput.",
+    "No credentials, cookies, request bodies, or browser storage are exported."
+  ]
+}
