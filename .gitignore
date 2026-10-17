@@ -115,3 +115,7 @@ temp/
 # Local trained model artifacts
 models/
 /reports/
+
+# Track SQLAlchemy Python models, not AI training weights
+!/apps/api/db/models/
+!/apps/api/db/models/*.py
