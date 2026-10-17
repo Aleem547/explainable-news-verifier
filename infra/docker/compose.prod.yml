@@ -1,0 +1,123 @@
+# Phase 12B DRAFT — do not deploy before the checks in phase12b-deployment-notes.md.
+# Designed for a single Linux/ARM64 OCI host, not Windows production.
+# No service ports are public unless the optional 'edge' profile is enabled.
+name: explainable-news-verifier-prod
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER in .env.production}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env.production}
+      POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB in .env.production}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    mem_limit: 768m
+    networks: [backend]
+
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    mem_limit: 256m
+    networks: [backend]
+
+  qdrant:
+    # TODO before production: pin the exact ARM64-compatible image digest.
+    image: qdrant/qdrant:latest
+    restart: unless-stopped
+    volumes:
+      - qdrant_data:/qdrant/storage
+    mem_limit: 1g
+    networks: [backend]
+
+  api:
+    # This image currently exists only in local Docker until it is transferred.
+    image: verifier-api:phase12b-arm64
+    platform: linux/arm64
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 90s
+    # TODO: audit and create production-only env files before launching.
+    env_file:
+      - ../../.env.production
+    volumes:
+      - ../../models:/app/models:ro
+      - ../../data:/app/data:ro
+      - ../../docker-data/page_bm25:/app/data/indexes/fever/page_bm25:rw
+      - type: bind
+        source: ${FEVER_SORTED_PARQUET_HOST_PATH:?set an absolute Linux path to sorted FEVER parquet}
+        target: /app/data/processed/fever/wiki_sentences.parquet
+        read_only: true
+      - verifier_hf_cache:/home/verifier/.cache/huggingface
+    expose:
+      - "8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import json; from urllib.request import urlopen; data = json.load(urlopen('http://127.0.0.1:8000/api/v1/ready', timeout=5)); assert data.get('ready') is True"
+      interval: 30s
+      timeout: 8s
+      retries: 3
+      start_period: 180s
+    # Preliminary limit only; benchmark and adjust before production release.
+    mem_limit: 8g
+    networks: [backend, edge]
+
+  caddy:
+    # Enable only AFTER domain DNS, API authentication, and TLS are verified.
+    profiles: [edge]
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      API_DOMAIN: ${API_DOMAIN:-api.example.invalid}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile.prod:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+    mem_limit: 256m
+    networks: [edge]
+
+volumes:
+  postgres_data:
+  redis_data:
+  qdrant_data:
+  verifier_hf_cache:
+  caddy_data:
+  caddy_config:
+
+networks:
+  # Internal network: databases and queues have no host-facing ports.
+  backend:
+    internal: true
+  # Caddy can serve traffic to the API, but isn't enabled by default.
+  edge: {}

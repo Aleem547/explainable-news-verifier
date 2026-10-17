@@ -1,0 +1,14 @@
+# Phase 12B draft. Requires working DNS and a real API_DOMAIN before enabling.
+{$API_DOMAIN} {
+    encode zstd gzip
+
+    @internal path /api/v1/ready
+    respond @internal 404
+
+    reverse_proxy api:8000
+
+    header {
+        X-Content-Type-Options nosniff
+        Referrer-Policy strict-origin-when-cross-origin
+    }
+}

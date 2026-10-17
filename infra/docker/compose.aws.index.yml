@@ -1,0 +1,7 @@
+services:
+  api:
+    volumes:
+      - type: bind
+        source: /home/ubuntu/explainable-news-verifier/data/indexes/fever/page_bm25
+        target: /app/data/indexes/fever/page_bm25
+        read_only: false

@@ -1,0 +1,17 @@
+services:
+  postgres:
+    mem_limit: 768m
+
+  redis:
+    mem_limit: 128m
+
+  qdrant:
+    mem_limit: 1g
+
+  api:
+    image: verifier-api:aws-amd64
+    platform: linux/amd64
+    mem_limit: 4g
+
+  caddy:
+    mem_limit: 128m
