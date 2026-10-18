@@ -1,0 +1,4 @@
+services:
+  api:
+    volumes:
+      - ../../apps/api:/app/apps/api:ro
