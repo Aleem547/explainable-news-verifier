@@ -1,5 +1,6 @@
+
 import Link from "next/link";
-import { LockKeyhole } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 
 const navigation = [
   { label: "Overview", href: "/" },
@@ -20,11 +21,14 @@ export function AppSidebar() {
         <div className="flex size-11 items-center justify-center rounded-xl bg-blue-500 font-bold text-white">
           EV
         </div>
+
         <div>
           <p className="font-semibold tracking-tight text-slate-100">
             Explainable Verifier
           </p>
-          <p className="text-xs text-slate-500">Evidence Intelligence</p>
+          <p className="text-xs text-slate-500">
+            Evidence Intelligence
+          </p>
         </div>
       </Link>
 
@@ -45,13 +49,18 @@ export function AppSidebar() {
 
       <div className="mt-auto hidden border-t border-white/10 p-6 lg:block">
         <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
-          <div className="flex items-center gap-2 text-sm font-medium">
-            <LockKeyhole size={16} className="text-blue-400" aria-hidden="true" />
-            Local workspace
+          <div className="flex items-center gap-2 text-sm font-medium text-slate-100">
+            <ShieldCheck
+              size={16}
+              className="text-blue-400"
+              aria-hidden="true"
+            />
+            Production Deployment
           </div>
+
           <p className="mt-2 text-xs leading-5 text-slate-400">
-            Frontend development environment. Public verification requires
-            authentication and rate limiting before deployment.
+            Secure AI-powered claim verification hosted on AWS,
+            with evidence-backed results and transparent limitations.
           </p>
         </div>
       </div>
