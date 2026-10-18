@@ -8,6 +8,8 @@ from enum import StrEnum
 class Provider(StrEnum):
     NEWSAPI = "newsapi"
     GOOGLE_FACTCHECK = "google_factcheck"
+    GDELT_DOC = "gdelt_doc"
+    RSS_FEED = "rss_feed"
 
 
 class ContentKind(StrEnum):

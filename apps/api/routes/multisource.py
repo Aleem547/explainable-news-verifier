@@ -25,6 +25,7 @@ from apps.api.services.multisource import (
 )
 from apps.api.services.multisource_discovery import (
     NoConfiguredProviderError,
+    DiscoveryProvidersFailedError,
     discover_external_metadata,
 )
 
@@ -65,7 +66,7 @@ async def discover_multisource_metadata(
     request: ExternalDiscoveryRequest,
     session: Annotated[AsyncSession, Depends(get_db_session)],
 ) -> ExternalDiscoveryResponse:
-    """Opt-in NewsAPI/fact-check search; stores discovery metadata, not full content."""
+    """Restricted provider discovery, including keyless GDELT metadata only."""
     try:
         async with new_provider_http_client() as client:
             async with session.begin():
@@ -81,6 +82,8 @@ async def discover_multisource_metadata(
         return result
     except NoConfiguredProviderError as exc:
         raise HTTPException(503, "No available discovery providers") from exc
+    except DiscoveryProvidersFailedError as exc:
+        raise HTTPException(502, "All discovery providers failed") from exc
     except ValueError as exc:
         raise HTTPException(422, str(exc)) from exc
     except Exception as exc:
