@@ -7,7 +7,7 @@ const navigation = [
   { label: "Verify a Claim", href: "/verify" },
   { label: "Verification Pipeline", href: "/#pipeline" },
   { label: "Platform Capabilities", href: "/#capabilities" },
-  { label: "Development Status", href: "/#status" },
+  { label: "Deployment Status", href: "/#status" },
 ] as const;
 
 export function AppSidebar() {

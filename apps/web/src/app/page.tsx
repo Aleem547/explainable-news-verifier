@@ -33,7 +33,7 @@ export default function Home() {
         >
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-              Workspace
+              AI Verification Platform
             </p>
 
             <h1 className="mt-1 text-lg font-semibold">
@@ -43,7 +43,7 @@ export default function Home() {
 
           <span className="inline-flex items-center gap-2 rounded-full border border-blue-400/20 bg-blue-400/10 px-4 py-2 text-xs font-medium text-blue-300">
             <span className="size-2 rounded-full bg-blue-400" />
-            Frontend Development
+            Production
           </span>
         </header>
 
@@ -81,7 +81,7 @@ export default function Home() {
                   href="#status"
                   className="inline-flex items-center gap-2 rounded-xl border border-white/15 px-5 py-3 text-sm font-semibold text-slate-200 transition-colors hover:bg-white/10"
                 >
-                  View development status
+                  View deployment status
                 </a>
               </div>
             </div>
@@ -149,8 +149,9 @@ export default function Home() {
                 size={22}
                 aria-hidden="true"
               />
+
               <h2 className="text-xl font-semibold">
-                Development status
+                Deployment status
               </h2>
             </div>
 
@@ -158,41 +159,45 @@ export default function Home() {
               <div>
                 <div className="flex items-center gap-2 text-sm font-medium text-green-300">
                   <CheckCircle2 size={16} aria-hidden="true" />
-                  Backend implemented
+                  Backend deployed
                 </div>
+
                 <p className="mt-2 text-sm leading-6 text-slate-400">
-                  FEVER retrieval, NLI assessment, and multi-source
-                  diagnostic services.
+                  FEVER evidence retrieval and NLI-based claim
+                  verification are operational on AWS.
                 </p>
               </div>
 
               <div>
-                <div className="flex items-center gap-2 text-sm font-medium text-blue-300">
+                <div className="flex items-center gap-2 text-sm font-medium text-green-300">
                   <Layers3 size={16} aria-hidden="true" />
-                  Frontend in progress
+                  Frontend deployed
                 </div>
+
                 <p className="mt-2 text-sm leading-6 text-slate-400">
-                  Dashboard, reusable components, and responsive
-                  layouts are being established.
+                  Responsive Next.js dashboard and explainable
+                  verification results are live on Vercel.
                 </p>
               </div>
 
               <div>
                 <div className="flex items-center gap-2 text-sm font-medium text-amber-300">
                   <ShieldCheck size={16} aria-hidden="true" />
-                  Production validation pending
+                  Independent corroboration pending
                 </div>
+
                 <p className="mt-2 text-sm leading-6 text-slate-400">
-                  Live-source evaluation, authentication, and cloud
-                  deployment are not yet complete.
+                  Current verdicts use a Wikipedia-derived corpus.
+                  Independent cross-source verification remains
+                  a documented limitation.
                 </p>
               </div>
             </div>
           </section>
 
           <footer className="border-t border-white/10 py-6 text-xs text-slate-500">
-            Explainable News Verifier · Development workspace ·
-            Live verification results will be integrated later.
+            Explainable News Verifier · Production Deployment ·
+            Live evidence-backed claim verification available.
           </footer>
         </div>
       </main>
