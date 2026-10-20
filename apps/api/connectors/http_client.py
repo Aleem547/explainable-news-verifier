@@ -15,8 +15,15 @@ _ALLOWED_ENDPOINTS = frozenset(
     {
         "https://newsapi.org/v2/everything",
         "https://factchecktools.googleapis.com/v1alpha1/claims:search",
+        "https://api.gdeltproject.org/api/v2/doc/doc",
     }
 )
+# Only provider-controlled RSS endpoints are allowed; callers cannot supply URLs.
+_ALLOWED_RSS_FEEDS = frozenset({
+    "https://feeds.bbci.co.uk/news/world/rss.xml",
+    "https://feeds.npr.org/1001/rss.xml",
+    "https://www.theguardian.com/world/rss",
+})
 _RETRYABLE_STATUS = frozenset({408, 429, 500, 502, 503, 504})
 
 
@@ -51,6 +58,39 @@ class ProviderHttpClient:
     def __init__(self, client: httpx.AsyncClient, policy: HttpPolicy | None = None):
         self.client = client
         self.policy = policy or HttpPolicy()
+
+    async def get_feed_xml(self, *, provider: str, endpoint: str) -> bytes:
+        """Fetch one allowlisted RSS feed with a strict byte/time bound.
+
+        Unlike JSON discovery, RSS fallback does not retry (avoids hammering
+        publishers). Redirects and HTML are explicitly rejected.
+        """
+        if endpoint not in _ALLOWED_RSS_FEEDS:
+            raise ValueError("RSS endpoint is not allowlisted")
+        try:
+            async with self.client.stream(
+                "GET", endpoint,
+                headers={"Accept": "application/rss+xml, application/xml, text/xml"},
+                follow_redirects=False,
+            ) as response:
+                status = response.status_code
+                if 300 <= status <= 399:
+                    raise ConnectorError(provider, "redirect_refused")
+                if status >= 400:
+                    raise ConnectorError(provider, f"http_{status}")
+                mime = response.headers.get("content-type", "").split(";", 1)[0].strip().lower()
+                if mime not in {"application/rss+xml", "application/xml", "text/xml", "application/atom+xml"}:
+                    raise ConnectorError(provider, "unexpected_content_type")
+                chunks: list[bytes] = []
+                size = 0
+                async for chunk in response.aiter_bytes():
+                    size += len(chunk)
+                    if size > min(self.policy.max_bytes, 512_000):
+                        raise ConnectorError(provider, "payload_too_large")
+                    chunks.append(chunk)
+                return b"".join(chunks)
+        except httpx.RequestError:
+            raise ConnectorError(provider, "network_error") from None
 
     async def get_json(
         self,

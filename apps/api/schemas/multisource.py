@@ -76,7 +76,7 @@ class MultiSourceAssessmentResponse(BaseModel):
 class ExternalDiscoveryRequest(BaseModel):
     query: str = Field(min_length=1, max_length=300)
     limit: int = Field(default=5, ge=1, le=20)
-    provider: Literal["newsapi", "google_factcheck", "both"] = "both"
+    provider: Literal["newsapi", "google_factcheck", "both", "gdelt", "rss", "gdelt_rss"] = "both"
 
     @field_validator("query")
     @classmethod
