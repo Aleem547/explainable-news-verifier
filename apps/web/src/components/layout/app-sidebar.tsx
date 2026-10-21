@@ -5,6 +5,9 @@ import { ShieldCheck } from "lucide-react";
 const navigation = [
   { label: "Overview", href: "/" },
   { label: "Verify a Claim", href: "/verify" },
+  ...(process.env.ARTICLE_VERIFICATION_ENABLED === "true"
+    ? [{ label: "Article Verification Preview", href: "/article" }]
+    : []),
   { label: "Verification Pipeline", href: "/#pipeline" },
   { label: "Platform Capabilities", href: "/#capabilities" },
   { label: "Deployment Status", href: "/#status" },

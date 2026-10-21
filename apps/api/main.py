@@ -17,6 +17,7 @@ from apps.api.routes.multisource import router as multisource_router
 from apps.api.routes.retrieval import router as retrieval_router
 from apps.api.routes.usage_statistics import router as usage_statistics_router
 from apps.api.routes.verification import router as verification_router
+from apps.api.routes.article_verification import router as article_verification_router
 from apps.api.security.body_limit import InferenceBodyLimitMiddleware
 from apps.api.security.inference import require_inference_access
 from apps.api.security.user_quota import require_verified_user_access
@@ -97,6 +98,13 @@ app.include_router(
     dependencies=[*secured, Depends(require_verified_user_access)],
 )
 app.include_router(multisource_router, prefix="/api/v1", dependencies=secured)
+
+# Phase 13E.7: feature gated inside the handler as well as the web proxy.
+# The same service and per-user quota checks apply as /api/v1/verify.
+app.include_router(
+    article_verification_router, prefix="/api/v1",
+    dependencies=[*secured, Depends(require_verified_user_access)],
+)
 
 
 @app.get("/", tags=["system"])

@@ -7,7 +7,10 @@ import type { ApiErrorCode, ApiErrorResponse } from "./contracts";
 
 const DEFAULT_TIMEOUT_MS = 120_000;
 
-type AllowedEndpoint = "/api/v1/ready" | "/api/v1/verify";
+type AllowedEndpoint = "/api/v1/ready" | "/api/v1/verify" | "/api/v1/article/verify";
+
+const isInferencePath = (path: AllowedEndpoint) =>
+  path === "/api/v1/verify" || path === "/api/v1/article/verify";
 
 type BackendResult =
   | { ok: true; status: 200; data: unknown }
@@ -85,7 +88,7 @@ export async function requestBackend(
 
   if (
     process.env.NODE_ENV === "production" &&
-    path === "/api/v1/verify" &&
+    isInferencePath(path) &&
     (!token || token.length < 32 || !options.verifiedUserId)
   ) {
     return failure(
@@ -126,12 +129,12 @@ export async function requestBackend(
       headers["Content-Type"] = "application/json";
     }
 
-    if (token && path === "/api/v1/verify") {
+    if (token && isInferencePath(path)) {
       headers["X-Service-Token"] = token;
     }
 
     // Use only the server-verified authentication identity.
-    if (options.verifiedUserId && path === "/api/v1/verify") {
+    if (options.verifiedUserId && isInferencePath(path)) {
       headers["X-Verified-User"] = options.verifiedUserId;
     }
 

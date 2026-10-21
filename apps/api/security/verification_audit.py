@@ -56,11 +56,12 @@ class VerificationAuditMiddleware:
         if (
             scope["type"] != "http"
             or scope.get("method") != "POST"
-            or scope.get("path") != "/api/v1/verify"
+            or scope.get("path") not in {"/api/v1/verify", "/api/v1/article/verify"}
         ):
             await self.app(scope, receive, send)
             return
 
+        route = str(scope["path"])
         request_id = secrets.token_hex(12)
         started_at = time.perf_counter()
         status_code = 500
@@ -101,7 +102,7 @@ class VerificationAuditMiddleware:
                 "verification_request_audit",
                 request_id=request_id,
                 method="POST",
-                route="/api/v1/verify",
+                route=route,
                 status_code=status_code,
                 outcome=outcome,
                 actor_fingerprint=actor_fingerprint,
