@@ -59,10 +59,34 @@ async def verify_article_endpoint(
             headers={"Retry-After": "20"},
         ) from exc
     try:
-        try:
-            result = await verify_pasted_article(
+        # Model inference runs in worker threads, which Python cannot stop by
+        # cancelling their awaiting task. Shield the complete article workflow
+        # so its database session remains owned by this request until all work
+        # finishes. In particular, don't release admission on disconnect while
+        # inference could still be running.
+        work = asyncio.create_task(
+            verify_pasted_article(
                 session, text=payload.text, title=payload.title, max_verifications=1,
             )
+        )
+        try:
+            try:
+                result = await asyncio.shield(work)
+            except asyncio.CancelledError:
+                # A client disconnect or proxy timeout must NOT admit another
+                # CPU job while the current one is still running. Drain the
+                # workflow before releasing admission or closing its DB session.
+                # Repeat cancellations are also safe: admission stays held.
+                while not work.done():
+                    try:
+                        await asyncio.shield(work)
+                    except asyncio.CancelledError:
+                        continue
+                    except Exception:
+                        break
+                if not work.cancelled():
+                    work.exception()  # retrieve any hidden exception
+                raise
         except ValueError as exc:
             # Never echo the raw submitted article or internal exception details.
             raise HTTPException(422, "Article text could not be prepared.") from exc

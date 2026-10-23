@@ -2,9 +2,9 @@
 # Build from the repository root:
 # docker build -f infra/docker/api/Dockerfile -t verifier-api:10c3.1 .
 # Production inference runs on CPU; model/corpus artifacts are mounted, never copied.
-FROM ghcr.io/astral-sh/uv:latest AS uv_binary
+FROM ghcr.io/astral-sh/uv:0.12.21@sha256:a7aed3216253ee804de3e2d8afa5073baa1a177335345d43845cd4165e43b711 AS uv_binary
 
-FROM python:3.12-slim-bookworm AS dependencies
+FROM python:3.12-slim-bookworm@sha256:6a0e06f5ba0b373d051aabd3fffb9b873f27f9a2a3a14bcbe37dee6f0e3bbc70 AS dependencies
 COPY --from=uv_binary /uv /uvx /usr/local/bin/
 ENV UV_PROJECT_ENVIRONMENT=/opt/venv \
     UV_LINK_MODE=copy \
@@ -15,7 +15,7 @@ COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev --no-install-project
 
-FROM python:3.12-slim-bookworm AS runtime
+FROM python:3.12-slim-bookworm@sha256:6a0e06f5ba0b373d051aabd3fffb9b873f27f9a2a3a14bcbe37dee6f0e3bbc70 AS runtime
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PATH=/opt/venv/bin:$PATH \
@@ -36,6 +36,8 @@ WORKDIR /app
 COPY --from=dependencies /opt/venv /opt/venv
 COPY --chown=verifier:verifier apps/api ./apps/api
 COPY --chown=verifier:verifier ml ./ml
+
+ENV OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1
 
 USER verifier
 EXPOSE 8000

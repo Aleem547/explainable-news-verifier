@@ -69,14 +69,14 @@ class LocalUnauthenticatedGuards(unittest.TestCase):
 
     def test_web_rejects_unauthenticated_article_post(self):
         status, _headers, body = request(WEB, "/api/article-verification", "POST", data=ARTICLE)
-        self.assertIn(status, (401, 503), f"Web article guard not enforced: {status} {body[:150]!r}")
+        self.assertEqual(status, 401, f"Web article guard not enforced: {status} {body[:150]!r}")
 
     def test_web_rejects_cross_origin(self):
         status, _headers, body = request(
             WEB, "/api/article-verification", "POST", data=ARTICLE,
             headers={"Origin": "https://untrusted.example", "Sec-Fetch-Site": "cross-site"},
         )
-        self.assertIn(status, (403, 503), f"Cross-origin response unsafe: {status} {body[:150]!r}")
+        self.assertEqual(status, 403, f"Cross-origin response unsafe: {status} {body[:150]!r}")
 
 
 if __name__ == "__main__":
