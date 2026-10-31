@@ -10,6 +10,8 @@ class Provider(StrEnum):
     GOOGLE_FACTCHECK = "google_factcheck"
     GDELT_DOC = "gdelt_doc"
     RSS_FEED = "rss_feed"
+    PUBLISHER_LINK = "publisher_link"
+    OPERATOR_REVIEWED = "operator_reviewed"
 
 
 class ContentKind(StrEnum):

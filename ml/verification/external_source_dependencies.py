@@ -19,7 +19,7 @@ from ml.verification.source_independence import (
     Relationship, Snapshot, assess_source_independence, normalized_tokens,
 )
 
-RULE_VERSION = "phase13d4-risk-v1"
+RULE_VERSION = "phase3.4-reported-link-risk-v2"
 
 
 class SourceDependencyError(ValueError):
@@ -30,6 +30,7 @@ class ReportedDependencyKind(StrEnum):
     SHARED_WIRE_REPORT = "SHARED_WIRE_REPORT"
     SHARED_PRIMARY_SOURCE = "SHARED_PRIMARY_SOURCE"
     SHARED_PUBLISHER_OWNER = "SHARED_PUBLISHER_OWNER"
+    CROSS_PUBLICATION_ATTRIBUTION = "CROSS_PUBLICATION_ATTRIBUTION"
 
 
 @dataclass(frozen=True, slots=True)
