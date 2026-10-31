@@ -17,8 +17,12 @@ from datetime import datetime
 from hashlib import sha256
 from urllib.parse import urlsplit
 from uuid import UUID
+from typing import TYPE_CHECKING
 
-from apps.api.services.external_passage_retrieval import ExternalPassageCandidate
+from ml.verification.paragraph_inputs import ParagraphInput, validate_paragraph_input
+
+if TYPE_CHECKING:
+    from apps.api.services.external_passage_retrieval import ExternalPassageCandidate
 
 
 class EvidenceNormalizationError(ValueError):
@@ -45,7 +49,7 @@ class EvidenceNormalizationPolicy:
 
 @dataclass(frozen=True, slots=True)
 class NormalizedEvidence:
-    candidate: ExternalPassageCandidate
+    candidate: ExternalPassageCandidate | ParagraphInput
     normalized_text: str
     normalized_sha256: str
 
@@ -131,8 +135,15 @@ def _possible_near_duplicate(
 
 
 def _validate_candidate(candidate: ExternalPassageCandidate, policy: EvidenceNormalizationPolicy) -> None:
-    if not isinstance(candidate, ExternalPassageCandidate):
-        raise EvidenceNormalizationError("invalid_candidate_type")
+    if isinstance(candidate, ParagraphInput):
+        try:
+            validate_paragraph_input(candidate)
+        except ValueError as exc:
+            raise EvidenceNormalizationError("invalid_paragraph_input") from exc
+    else:
+        from apps.api.services.external_passage_retrieval import ExternalPassageCandidate
+        if not isinstance(candidate, ExternalPassageCandidate):
+            raise EvidenceNormalizationError("invalid_candidate_type")
     if (
         candidate.independently_verified
         or candidate.nli_evaluated

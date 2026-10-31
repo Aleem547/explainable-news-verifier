@@ -98,7 +98,7 @@ class DecisionTests(unittest.TestCase):
 
     def test_policy_version_and_explanations(self):
         d = self.evaluate(make_passage(family=1, group=1), make_passage(family=2, group=2))
-        self.assertEqual(d.policy_version, "phase13d7-conservative-v1")
+        self.assertEqual(d.policy_version, "phase3.2-grounded-conservative-v1")
         self.assertIn("NLI_SCORES_NOT_TRUTH_PROBABILITIES", d.explanation_codes)
         self.assertIn("NO_INDEPENDENT_CORROBORATION_WITHOUT_SEPARATE_AUDITED_PROOF", d.warnings)
 

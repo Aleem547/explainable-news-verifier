@@ -52,6 +52,40 @@ class ClaimCandidateTests(unittest.TestCase):
     def run_article(self, text=GOOD, **kw):
         return extract_article_claim_candidates(prepared=pasted(text), **kw)
 
+    def test_past_landing_claim_is_literal_unverified_candidate(self):
+        claim = "Chandrayaan-3 landed on the Moon."
+        text = claim + "\nThis background paragraph explains the scope of this local check without adding independent evidence."
+        report = self.run_article(text)
+        self.assertEqual(len(report.candidates), 1)
+        candidate = report.candidates[0]
+        self.assertEqual(candidate.literal_text, claim)
+        self.assertEqual(text[candidate.start_char:candidate.end_char], claim)
+        self.assertEqual(candidate.status, "UNVERIFIED_CANDIDATE")
+        self.assertFalse(candidate.eligible_as_independent_evidence)
+        self.assertFalse(report.independent_corroboration_established)
+
+    def test_negated_landing_claim_keeps_negation_and_distinct_identity(self):
+        positive = "Chandrayaan-3 landed on the Moon."
+        negative = "Chandrayaan-3 did not land on the Moon."
+        report = self.run_article(positive + " " + negative + " " + TWO)
+        self.assertEqual([c.literal_text for c in report.candidates], [positive, negative, TWO])
+        self.assertNotEqual(report.candidates[0].normalized_fingerprint,
+                            report.candidates[1].normalized_fingerprint)
+
+    def test_landing_speculation_question_and_context_stay_filtered(self):
+        rejected = ("Chandrayaan-3 might have landed on the Moon.",
+                    "Did Chandrayaan-3 land on the Moon?",
+                    "It landed on the Moon during the mission.")
+        for sentence in rejected:
+            with self.subTest(sentence=sentence):
+                report = self.run_article(sentence + " " + TWO + " " + THREE)
+                self.assertEqual([c.literal_text for c in report.candidates], [TWO, THREE])
+
+    def test_landing_noun_fragment_is_not_promoted(self):
+        sentence = "Chandrayaan-3 landing site on the Moon."
+        report = self.run_article(sentence + " " + TWO + " " + THREE)
+        self.assertEqual([c.literal_text for c in report.candidates], [TWO, THREE])
+
     def test_report_origin_never_independent(self):
         report = self.run_article()
         self.assertEqual(report.source_kind, "USER_SUPPLIED_ONLY")

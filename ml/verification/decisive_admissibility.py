@@ -33,6 +33,9 @@ _PREDICATE = re.compile(
     r"became|becomes|produced|directed|written|released|located|situated)\b",
     flags=re.IGNORECASE,
 )
+# External article grounding opts into this narrow event syntax. The existing
+# Wikipedia admission path retains its original predicate policy by default.
+_LANDING_EVENT = re.compile(r"\s+(?:landed|did\s+(?:not\s+)?land)\b", re.IGNORECASE)
 _POSSESSIVE = re.compile(r"^([A-Z][\w-]*(?:\s+[A-Z][\w-]*)*)['\u2019]s\b")
 _IN_LOCATION = re.compile(r"\s+(?:in|at|near)\s+", flags=re.IGNORECASE)
 _WORD = re.compile(r"\b[A-Za-z][\w'-]*\b")
@@ -41,7 +44,7 @@ _GENERIC = frozenset(
 )
 
 
-def named_subject_anchor(claim: str) -> str | None:
+def named_subject_anchor(claim: str, *, allow_landing_event: bool = False) -> str | None:
     """Return a high-precision initial named subject, or None when uncertain.
 
     Supported examples: "Rio's sequel is ...", "The Eiffel Tower is ...",
@@ -49,6 +52,9 @@ def named_subject_anchor(claim: str) -> str | None:
     """
     original = claim.strip().strip('"\u201c\u201d')
     match = _PREDICATE.search(original)
+    event = _LANDING_EVENT.search(original) if allow_landing_event is True else None
+    if event is not None and (match is None or event.start() < match.start()):
+        match = event
     if match is None:
         return None
 
@@ -63,6 +69,12 @@ def named_subject_anchor(claim: str) -> str | None:
 
     tokens = _WORD.findall(subject)
     if not tokens:
+        return None
+    if match is event and tokens[0].casefold() in {"it", "he", "she", "they", "we", "you", "i", "there"}:
+        return None
+    if match is event and normalized_words(subject) != normalized_words(" ".join(tokens)):
+        # Do not discard a standalone mission number (e.g. "Apollo 11") or a
+        # malformed spaced identifier and accidentally match a sibling mission.
         return None
     if tokens[0].casefold() in _GENERIC:
         return None

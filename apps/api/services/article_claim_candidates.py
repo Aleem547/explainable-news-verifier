@@ -24,7 +24,7 @@ from apps.api.services.pasted_article_preparation import (
 )
 from ml.provenance.identity import canonical_public_url, normalize_source_domain
 
-POLICY_VERSION = "phase13e4-literal-claim-candidates-v1"
+POLICY_VERSION = "phase13e4-literal-claim-candidates-v2"
 _TOKEN = re.compile(r"\b[\w]+(?:['’][\w]+)?\b", re.UNICODE)
 _NUMERIC = re.compile(r"\b\d+(?:[.,]\d+)*\b")
 _NAMED = re.compile(r"\b(?:[A-Z][a-z]{2,}|[A-Z]{2,})\b")
@@ -32,7 +32,7 @@ _WORDS = frozenset({
     "is", "are", "was", "were", "has", "have", "had", "will", "contains",
     "consists", "includes", "located", "recorded", "measured", "published",
     "released", "announced", "confirmed", "reported", "said", "stated",
-    "launched", "signed", "approved", "rejected", "reached", "grew", "fell",
+    "launched", "land", "landed", "signed", "approved", "rejected", "reached", "grew", "fell",
     "rose", "increased", "decreased", "opened", "closed", "began", "ended",
     "won", "lost", "started", "completed", "founded", "built", "developed",
     "issued", "operates", "operated", "serves", "served", "discovered",
