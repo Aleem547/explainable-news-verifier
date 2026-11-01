@@ -47,6 +47,8 @@ class AuditedExternalPassage:
     nli_evaluated: bool = False
     independently_verified: bool = False
     independent_corroboration_established: bool = False
+    snapshot_text_length: int | None = None
+    fetch_html_sha256: str | None = None
 
 
 def _aware(value: object) -> bool:
@@ -212,6 +214,10 @@ def _validate_stored_record(candidate: ExternalPassageCandidate, record: object)
         or (record.published_at_snapshot is not None and not _aware(record.published_at_snapshot))
     ):
         raise ExternalProvenanceError("invalid_fetch_or_time_provenance")
+    html_digest = record.fetch_metadata.get("html_sha256")
+    if html_digest is not None and (not isinstance(html_digest, str) or len(html_digest) != 64
+            or any(c not in "0123456789abcdef" for c in html_digest)):
+        raise ExternalProvenanceError("invalid_fetch_html_digest")
     # A verified URL identity is NOT proof that this publisher is independent.
     _validate_candidate(candidate)
     return AuditedExternalPassage(
@@ -223,6 +229,8 @@ def _validate_stored_record(candidate: ExternalPassageCandidate, record: object)
         passage_start_offset=record.start_offset,
         passage_end_offset=record.end_offset,
         reported_publication_at=record.published_at_snapshot,
+        snapshot_text_length=len(record.content_text),
+        fetch_html_sha256=html_digest,
     )
 
 

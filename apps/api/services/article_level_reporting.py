@@ -27,6 +27,10 @@ from apps.api.services.article_multi_claim_verification import (
 from apps.api.services.article_url_preparation import PreparedArticleUrl
 from apps.api.services.pasted_article_preparation import PreparedPastedArticle
 
+from apps.api.services.external_reporting_origin_audit import ReportingOriginAuditSummary
+from apps.api.services.trusted_reporting_review import TrustedOriginReviewSummary
+from apps.api.services.reviewed_corroboration import ReviewedCorroboration
+
 POLICY_VERSION = "phase13e6-article-report-v1"
 _VALID_SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _STATUS = frozenset(("ASSESSED", "UNAVAILABLE", "FAILED", "SKIPPED_LIMIT"))
@@ -52,6 +56,15 @@ class ArticleEvidenceReference:
     dependency_risk_family: int
     duplicate_group: int
     independence_status: Literal["NOT_ESTABLISHED"] = "NOT_ESTABLISHED"
+    decisive_evidence_admitted: bool | None = None
+    scope_exclusion_codes: tuple[str, ...] = ()
+    input_kind: str = "STORED_PASSAGE"
+    parent_passage_id: UUID | None = None
+    input_sha256: str | None = None
+    input_start_offset: int | None = None
+    input_end_offset: int | None = None
+    snapshot_sha256: str | None = None
+    fetch_observation_id: UUID | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -75,6 +88,12 @@ class ArticleClaimFinding:
     cross_corpus_relationship: str | None
     warning_codes: tuple[str, ...]
     independent_corroboration_established: bool = False
+    external_input_kind: str = "STORED_PASSAGE"
+    external_audited_parent_count: int | None = None
+    external_origin_audit: ReportingOriginAuditSummary | None = None
+    external_admission_policy_version: str | None = None
+    external_trusted_origin_review: TrustedOriginReviewSummary | None = None
+    external_reviewed_corroboration: ReviewedCorroboration | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -252,6 +271,12 @@ def build_article_level_report(
             nli_threshold_passed=ref.nli_threshold_passed,
             dependency_risk_family=ref.dependency_risk_family,
             duplicate_group=ref.duplicate_group,
+            decisive_evidence_admitted=ref.decisive_evidence_admitted,
+            scope_exclusion_codes=ref.scope_exclusion_codes,
+            input_kind=ref.input_kind, parent_passage_id=ref.parent_passage_id,
+            input_sha256=ref.input_sha256, input_start_offset=ref.input_start_offset,
+            input_end_offset=ref.input_end_offset, snapshot_sha256=ref.snapshot_sha256,
+            fetch_observation_id=ref.fetch_observation_id,
         ) for ref in unified.external.provenance)
         findings.append(ArticleClaimFinding(
             candidate_id=claim.candidate_id, literal_text=claim.literal_text,
@@ -268,6 +293,12 @@ def build_article_level_report(
             external_status=unified.external.status,
             external_verdict=unified.external.evidence_verdict,
             external_references=references,
+            external_input_kind=unified.external.evidence_input_kind,
+            external_audited_parent_count=unified.external.audited_parent_count,
+            external_origin_audit=unified.external.origin_audit,
+            external_admission_policy_version=unified.external.decisive_admissibility_policy_version,
+            external_trusted_origin_review=unified.external.trusted_origin_review,
+            external_reviewed_corroboration=unified.external.reviewed_corroboration,
             cross_corpus_relationship=unified.relationship,
             warning_codes=tuple(sorted(set(claim.warning_codes)
                                         | set(unified.warnings)
