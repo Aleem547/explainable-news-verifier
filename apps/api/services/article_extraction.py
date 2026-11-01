@@ -27,8 +27,11 @@ class ArticleExtractionPolicy:
     max_html_bytes: int = 1_000_000
     max_text_chars: int = 500_000
     min_text_chars: int = 100
+    favor_precision: bool = True
 
     def __post_init__(self) -> None:
+        if type(self.favor_precision) is not bool:
+            raise ValueError("Extraction profile must be a Boolean")
         if not 1024 <= self.max_html_bytes <= 2_000_000:
             raise ValueError("Invalid HTML byte limit")
 
@@ -184,7 +187,7 @@ def extract_discovered_article_html(
             include_tables=False,
             include_links=False,
             include_images=False,
-            favor_precision=True,
+            favor_precision=settings.favor_precision,
             fast=True,
         )
 
@@ -255,6 +258,7 @@ def extract_discovered_article_html(
         document_url=discovered_url,
         publisher_domain=publisher_domain,
         publisher_name=discovery_hit.publisher_name,
+        extraction_method=("trafilatura_json_v1" if settings.favor_precision else "trafilatura_json_recall_v1"),
         text=text,
         text_sha256=sha256_text(text),
         html_sha256=sha256(html_body).hexdigest(),

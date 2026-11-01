@@ -11,7 +11,7 @@ from ml.verification.entity_relevance import normalized_words
 
 
 def external_subject_grounded(claim: str, evidence_text: str) -> bool:
-    anchor = named_subject_anchor(claim)
+    anchor = named_subject_anchor(claim, allow_landing_event=True)
     if anchor is None:
         return False
     text = normalized_words(evidence_text)

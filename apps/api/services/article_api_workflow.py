@@ -50,8 +50,14 @@ async def verify_pasted_article(
         policy=MultiClaimPolicy(
             max_verifications=max_verifications,
             wikipedia_top_k=3,
-            external_top_k=4,
+            # Two fully preserved source spans can contain five complete
+            # paragraphs. Keep that set intact under a fixed five-input cap.
+            external_top_k=5,
             nli_threshold=0.90,
+            # The restricted article preview uses complete audited paragraphs.
+            # Raw stored passages remain the default for other trusted callers.
+            # This setting cannot be supplied by the public request payload.
+            external_input_mode="DERIVED_PARAGRAPH",
         ),
     )
     return build_article_level_report(prepared=prepared, verification=report)
