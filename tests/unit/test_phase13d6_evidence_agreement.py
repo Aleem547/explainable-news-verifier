@@ -25,7 +25,7 @@ def make_passage(*, family=1, group=1, stance="support", domain=None, **override
         "weak_support": ("ENTAILMENT", .70, .20, .10, .70, False),
     }
     label, e, c, n, confidence, passed = values[stance]
-    text = f"An evidence passage about a geographical fact, source {uuid4()}."
+    text = f"The Eiffel Tower is located in Paris, according to source {uuid4()}."
     domain = domain or f"paper-{family}.example.org"
     kwargs = dict(
         passage_id=uuid4(), document_version_id=uuid4(), source_id=uuid4(),
@@ -42,7 +42,7 @@ def make_passage(*, family=1, group=1, stance="support", domain=None, **override
 
 def make_report(*passages, **overrides):
     kwargs = dict(
-        claim="A monument is located in Paris", assessed_at=NOW,
+        claim="The Eiffel Tower is located in Paris", assessed_at=NOW,
         nli_threshold=.90, evidence=tuple(passages),
         dependency_risk_family_count=len({p.dependency_risk_family for p in passages}),
         exact_duplicate_count=0, possible_near_duplicate_count=0,
@@ -189,7 +189,7 @@ class EvidenceAgreementTests(unittest.TestCase):
         predictions = [SimpleNamespace(entailment=r.entailment, contradiction=r.contradiction,
                                        neutral=r.neutral) for r in raw]
         nli = build_external_nli_report(
-            claim="A monument is located in Paris", audits=audits,
+            claim="The Eiffel Tower is located in Paris", audits=audits,
             normalization=normalized, dependencies=deps,
             predictions=predictions, assessed_at=NOW,
         )

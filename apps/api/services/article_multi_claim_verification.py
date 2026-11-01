@@ -56,8 +56,13 @@ class MultiClaimPolicy:
     wikipedia_top_k: int = 5
     external_top_k: int = 10
     nli_threshold: float = 0.90
+    external_input_mode: str = "STORED_PASSAGE"
 
     def __post_init__(self) -> None:
+        if type(self.external_input_mode) is not str or self.external_input_mode not in {
+            "STORED_PASSAGE", "DERIVED_PARAGRAPH",
+        }:
+            raise ValueError("invalid_external_input_mode")
         if type(self.max_verifications) is not int or not 1 <= self.max_verifications <= 20:
             raise ValueError("invalid_max_verifications")
         if type(self.wikipedia_top_k) is not int or not 1 <= self.wikipedia_top_k <= 20:
@@ -187,6 +192,8 @@ def _validate_unified_report(raw: object, *, claim: str, at: datetime) -> Unifie
         if ref.passage_id in seen:
             raise ValueError("unified_report_duplicate_evidence")
         seen.add(ref.passage_id)
+    from apps.api.services.external_presentation_contract import validate_external_presentation
+    validate_external_presentation(ext, claim=claim)
     return raw
 
 
@@ -251,6 +258,8 @@ async def verify_article_claims(
                     external_top_k=settings.external_top_k,
                     nli_threshold=settings.nli_threshold,
                     assessed_at=at,
+                    **({"external_input_mode": settings.external_input_mode}
+                       if settings.external_input_mode != "STORED_PASSAGE" else {}),
                 )
                 finding = _validate_unified_report(raw, claim=candidate.literal_text, at=at)
                 status = ("UNAVAILABLE" if finding.wikipedia.status != "AVAILABLE"
