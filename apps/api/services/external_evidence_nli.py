@@ -9,15 +9,19 @@ from __future__ import annotations
 
 import math
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from hashlib import sha256
 from typing import TYPE_CHECKING, Protocol
 from uuid import UUID
+from ml.verification.paragraph_inputs import (
+    ParagraphInput, ParagraphSelection, AuditedParagraphInput, validate_paragraph_selection,
+)
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
     from apps.api.services.external_passage_retrieval import ExternalPassageCandidate
+    from ml.verification.external_source_dependencies import ReportedDependency
 
 
 class ExternalNliError(ValueError):
@@ -51,6 +55,13 @@ class ExternalNliPassage:
     nli_evaluated: bool = True
     independently_verified: bool = False
     independent_corroboration_established: bool = False
+    paragraph_input: ParagraphInput | None = None
+    input_pair_tokens: int | None = None
+    model_max_length: int | None = None
+
+    @property
+    def input_kind(self) -> str:
+        return "DERIVED_PARAGRAPH" if self.paragraph_input is not None else "STORED_PASSAGE"
 
 
 @dataclass(frozen=True, slots=True)
@@ -71,6 +82,42 @@ class ExternalNliReport:
     independence_status: str = "NOT_ESTABLISHED"
     independent_corroboration_established: bool = False
     independently_verified: bool = False
+    paragraph_selection: ParagraphSelection | None = None
+
+
+def validate_nli_input_bindings(report: ExternalNliReport) -> None:
+    """Replay derived text/identity bindings before any downstream vote."""
+    selection = report.paragraph_selection
+    if selection is None:
+        if any(row.paragraph_input is not None or row.input_pair_tokens is not None
+               or row.model_max_length is not None for row in report.evidence):
+            raise ExternalNliError("paragraph_metadata_without_selection")
+        return
+    try:
+        validate_paragraph_selection(selection)
+    except ValueError as exc:
+        raise ExternalNliError("invalid_paragraph_selection") from exc
+    expected = {p.context_id: p for p in selection.inputs}
+    if len(report.evidence) != len(expected) or {r.passage_id for r in report.evidence} != set(expected):
+        raise ExternalNliError("paragraph_report_input_coverage_mismatch")
+    if len({row.model_max_length for row in report.evidence}) != 1:
+        raise ExternalNliError("paragraph_model_budget_mismatch")
+    for row in report.evidence:
+        paragraph = expected[row.passage_id]
+        if (row.paragraph_input != paragraph
+                or row.document_version_id != paragraph.document_version_id
+                or row.source_id != paragraph.source_id
+                or row.publisher_domain != paragraph.publisher_domain
+                or row.article_url != paragraph.original_url
+                or row.retrieved_at != paragraph.retrieved_at
+                or row.lexical_relevance_score != paragraph.lexical_relevance_score
+                or row.passage_text != paragraph.text or row.passage_sha256 != paragraph.sha256
+                or paragraph.parent.fetch_observed_at > report.assessed_at
+                or type(row.input_pair_tokens) is not int
+                or type(row.model_max_length) is not int
+                or not 16 <= row.model_max_length <= 4096
+                or not 0 < row.input_pair_tokens <= row.model_max_length):
+            raise ExternalNliError("paragraph_report_binding_mismatch")
 
 
 def _probabilities(raw: object) -> tuple[str, float, float, float, float]:
@@ -129,6 +176,9 @@ def build_external_nli_report(
     predictions: Sequence[object],
     nli_threshold: float = 0.90,
     assessed_at: datetime,
+    paragraph_selection: ParagraphSelection | None = None,
+    input_pair_tokens: Sequence[int] | None = None,
+    model_max_length: int | None = None,
 ) -> ExternalNliReport:
     """Pure validation and report construction (the predictor never runs here).
 
@@ -140,6 +190,21 @@ def build_external_nli_report(
         raise ExternalNliError("invalid_audit_batch")
     candidates = [getattr(a, "candidate", None) for a in audits]
     _validate_request(claim, candidates, nli_threshold, assessed_at)
+    if paragraph_selection is not None:
+        try:
+            validate_paragraph_selection(paragraph_selection)
+        except ValueError as exc:
+            raise ExternalNliError("invalid_paragraph_selection") from exc
+        if (tuple(candidates) != paragraph_selection.inputs
+                or any(type(a) is not AuditedParagraphInput for a in audits)
+                or not isinstance(input_pair_tokens, (tuple, list))
+                or len(input_pair_tokens) != len(candidates)
+                or type(model_max_length) is not int or not 16 <= model_max_length <= 4096
+                or any(type(n) is not int or not 0 < n <= model_max_length for n in input_pair_tokens)):
+            raise ExternalNliError("paragraph_input_or_token_binding_mismatch")
+    elif (any(isinstance(c, ParagraphInput) for c in candidates)
+          or input_pair_tokens is not None or model_max_length is not None):
+        raise ExternalNliError("derived_inputs_require_selection_and_token_binding")
     ids = {c.passage_id for c in candidates}
     versions = {c.document_version_id for c in candidates}
     for audit in audits:
@@ -203,7 +268,7 @@ def build_external_nli_report(
     if not isinstance(predictions, (tuple, list)) or len(predictions) != len(candidates):
         raise ExternalNliError("nli_output_count_mismatch")
     evidence = []
-    for audit, raw in zip(audits, predictions, strict=True):
+    for index, (audit, raw) in enumerate(zip(audits, predictions, strict=True)):
         candidate = audit.candidate
         label, confidence, e, c, n = _probabilities(raw)
         evidence.append(ExternalNliPassage(
@@ -224,6 +289,9 @@ def build_external_nli_report(
             neutral=n,
             nli_confidence=confidence,
             nli_threshold_passed=(label != "NEUTRAL" and confidence >= nli_threshold),
+            paragraph_input=candidate if paragraph_selection is not None else None,
+            input_pair_tokens=input_pair_tokens[index] if input_pair_tokens is not None else None,
+            model_max_length=model_max_length,
         ))
     return ExternalNliReport(
         claim=claim.strip(), assessed_at=assessed_at,
@@ -231,6 +299,7 @@ def build_external_nli_report(
         dependency_risk_family_count=len(families),
         exact_duplicate_count=normalization.exact_duplicate_count,
         possible_near_duplicate_count=normalization.possible_near_duplicate_count,
+        paragraph_selection=paragraph_selection,
     )
 
 
@@ -242,15 +311,22 @@ async def assess_external_evidence_nli(
     predictor: NliPredictor | None = None,
     assessed_at: datetime | None = None,
     nli_threshold: float = 0.90,
+    reported_links: Sequence[ReportedDependency] = (),
 ) -> ExternalNliReport:
     """Read-only D.3 → D.2 → D.4 → calibrated DeBERTa, in input order.
 
     Call only with already-fetched, stored external passages. The existing model
     lock is shared with the multisource endpoint. No independent corroboration
     decision is made here (that is Phases 13D.6-7).
+
+    reported_links are trusted server/operator inputs for conservative risk
+    grouping, not authenticated declarations of independent reporting. They
+    must not be populated directly from unreviewed public request fields.
     """
     at = assessed_at or datetime.now(UTC)
     _validate_request(claim, candidates, nli_threshold, at)
+    if not isinstance(reported_links, (tuple, list)) or len(reported_links) > 100:
+        raise ExternalNliError("invalid_reported_dependency_batch")
 
     # Import lazily: unit-only builds should not initialize SQLAlchemy or torch.
     from apps.api.services.external_evidence_normalization import normalize_and_group_external_evidence
@@ -260,17 +336,30 @@ async def assess_external_evidence_nli(
 
     audits = await audit_external_passage_provenance(session, candidates)
     normalized = normalize_and_group_external_evidence(list(candidates))
-    risks = await audit_external_source_dependencies(
-        session, list(candidates), assessed_at=at,
-    )
+    # Optional server-side dependency declarations can conservatively combine
+    # reuse risks. They never establish independence. Preserve the legacy
+    # empty-input call contract for existing integrations/test seams.
+    if reported_links:
+        risks = await audit_external_source_dependencies(
+            session, list(candidates), assessed_at=at, reported_links=tuple(reported_links),
+        )
+    else:
+        risks = await audit_external_source_dependencies(session, list(candidates), assessed_at=at)
     texts = [c.passage_text for c in candidates]  # original exact snapshot spans
     if predictor is None:
         from apps.api.services.multisource import _model_predict
         predictions = await run_in_threadpool(_model_predict, claim.strip(), texts)
     else:
         predictions = await run_in_threadpool(predictor.predict, claim.strip(), texts)
-    return build_external_nli_report(
+    report = build_external_nli_report(
         claim=claim, audits=audits, normalization=normalized,
         dependencies=risks, predictions=predictions,
         nli_threshold=nli_threshold, assessed_at=at,
     )
+    if reported_links:
+        # The dependency audit did no NLI itself; this wrapper has now run NLI.
+        risk_warnings = set(risks.warnings) - {"NO_NLI_OR_TRUTH_ASSESSMENT"}
+        report = replace(report, warnings=tuple(sorted(set(report.warnings) | risk_warnings | {
+            "REPORTED_DEPENDENCIES_ARE_UNAUTHENTICATED_DECLARATIONS",
+        })))
+    return report

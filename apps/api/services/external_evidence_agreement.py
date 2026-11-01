@@ -13,7 +13,13 @@ from datetime import datetime
 from hashlib import sha256
 from uuid import UUID
 
-from apps.api.services.external_evidence_nli import ExternalNliPassage, ExternalNliReport
+from apps.api.services.external_evidence_nli import (
+    ExternalNliPassage, ExternalNliReport, validate_nli_input_bindings,
+)
+from ml.verification.external_admissibility import external_subject_grounded
+from ml.verification.evidence_scope import assess_evidence_scope
+
+DECISIVE_ADMISSIBILITY_POLICY_VERSION = "phase3.10-bound-input-subject-and-scope-v2"
 
 
 class EvidenceAgreementError(ValueError):
@@ -61,11 +67,18 @@ class ExternalAgreementReport:
     independence_status: str = "NOT_ESTABLISHED"
     independently_verified: bool = False
     independent_corroboration_established: bool = False
+    subject_excluded_decisive_passage_ids: tuple[UUID, ...] = ()
+    decisive_admissibility_policy_version: str = DECISIVE_ADMISSIBILITY_POLICY_VERSION
+    scope_excluded_decisive_passages: tuple[tuple[UUID, tuple[str, ...]], ...] = ()
 
 
 def _validate_report(report: ExternalNliReport) -> None:
     if not isinstance(report, ExternalNliReport):
         raise EvidenceAgreementError("invalid_nli_report_type")
+    try:
+        validate_nli_input_bindings(report)
+    except (ValueError, TypeError, AttributeError, KeyError) as exc:
+        raise EvidenceAgreementError("invalid_model_input_binding") from exc
     if not isinstance(report.claim, str) or not 3 <= len(report.claim.strip()) <= 2000:
         raise EvidenceAgreementError("invalid_claim")
     at = report.assessed_at
@@ -172,6 +185,32 @@ def analyze_external_evidence_agreement(*, nli_report: ExternalNliReport) -> Ext
     """
     _validate_report(nli_report)
     rows = nli_report.evidence
+    # A calibrated NLI score describes a textual relation. A different subject
+    # must not gain a support/refutation vote merely by crossing the threshold.
+    # Preserve every original score/flag and abstain if no safe anchor is found.
+    subject_admitted = {
+        row.passage_id for row in rows
+        if row.nli_threshold_passed and external_subject_grounded(nli_report.claim, row.passage_text)
+    }
+    subject_excluded = tuple(sorted(
+        (row.passage_id for row in rows if row.nli_threshold_passed and row.passage_id not in subject_admitted),
+        key=lambda value: value.hex,
+    ))
+    scope_rejections = []
+    for row in rows:
+        if row.passage_id not in subject_admitted:
+            continue
+        codes = set(assess_evidence_scope(nli_report.claim, row.passage_text).reason_codes)
+        if row.paragraph_input is not None:
+            parent_codes = assess_evidence_scope(
+                nli_report.claim, row.paragraph_input.parent.passage_text).reason_codes
+            if parent_codes:
+                codes.update(parent_codes)
+                codes.add("PARENT_PASSAGE_SCOPE_REQUIRES_REVIEW")
+        if codes:
+            scope_rejections.append((row.passage_id, tuple(sorted(codes))))
+    scope_excluded = tuple(sorted(scope_rejections, key=lambda item: item[0].hex))
+    admitted = subject_admitted - {identity for identity, _ in scope_excluded}
     parents = {row.dependency_risk_family: row.dependency_risk_family for row in rows}
 
     def find(i: int) -> int:
@@ -199,9 +238,9 @@ def analyze_external_evidence_agreement(*, nli_report: ExternalNliReport) -> Ext
     units: list[AgreementUnit] = []
     for family_id in sorted(buckets):
         items = buckets[family_id]
-        supports = tuple(sorted((r.passage_id for r in items if r.nli_threshold_passed and r.nli_label == "ENTAILMENT"), key=lambda x: x.hex))
-        refutes = tuple(sorted((r.passage_id for r in items if r.nli_threshold_passed and r.nli_label == "CONTRADICTION"), key=lambda x: x.hex))
-        unresolved = tuple(sorted((r.passage_id for r in items if not r.nli_threshold_passed), key=lambda x: x.hex))
+        supports = tuple(sorted((r.passage_id for r in items if r.passage_id in admitted and r.nli_label == "ENTAILMENT"), key=lambda x: x.hex))
+        refutes = tuple(sorted((r.passage_id for r in items if r.passage_id in admitted and r.nli_label == "CONTRADICTION"), key=lambda x: x.hex))
+        unresolved = tuple(sorted((r.passage_id for r in items if r.passage_id not in admitted), key=lambda x: x.hex))
         stance = ("MIXED" if supports and refutes else "SUPPORT_ONLY" if supports
                   else "REFUTE_ONLY" if refutes else "NO_DECISIVE_EVIDENCE")
         units.append(AgreementUnit(
@@ -233,14 +272,21 @@ def analyze_external_evidence_agreement(*, nli_report: ExternalNliReport) -> Ext
         "AGREEMENT_IS_NOT_EDITORIAL_INDEPENDENCE",
         "NLI_OUTPUT_IS_NOT_A_FACTUAL_TRUTH_PROBABILITY",
         "CORROBORATION_DECISION_DEFERRED_TO_PHASE_13D7",
+        "NAMED_SUBJECT_GROUNDING_IS_NOT_SEMANTIC_RELEVANCE_PROOF",
     ))
+    if subject_excluded:
+        warnings.add("SUBJECT_UNGROUNDED_DECISIVE_NLI_EXCLUDED")
+    if scope_excluded:
+        warnings.add("SCOPE_UNRESOLVED_DECISIVE_NLI_EXCLUDED")
+        warnings.add("EVIDENCE_SCOPE_CHECKS_ARE_CONSERVATIVE_HEURISTICS")
+        warnings.update(code for _, codes in scope_excluded for code in codes)
     if len(units) < nli_report.dependency_risk_family_count:
         warnings.add("DUPLICATE_PASSAGES_BRIDGE_RISK_FAMILIES")
     if mixed_count:
         warnings.add("OPPOSING_NLI_STANCES_WITHIN_DEPENDENCY_RISK_UNIT")
     if opposing:
         warnings.add("OPPOSING_NLI_EVIDENCE_REQUIRES_REVIEW")
-    if any(len({r.nli_label for r in rows if r.duplicate_group == g and r.nli_threshold_passed}) > 1 for g in by_duplicate):
+    if any(len({r.nli_label for r in rows if r.duplicate_group == g and r.passage_id in admitted}) > 1 for g in by_duplicate):
         warnings.add("CONTRADICTORY_LABELS_INSIDE_DUPLICATE_GROUP")
     return ExternalAgreementReport(
         claim=nli_report.claim,
@@ -249,8 +295,8 @@ def analyze_external_evidence_agreement(*, nli_report: ExternalNliReport) -> Ext
         evidence=rows,
         units=tuple(units),
         total_passages=len(rows),
-        decisive_passages=sum(r.nli_threshold_passed for r in rows),
-        inconclusive_passages=sum(not r.nli_threshold_passed for r in rows),
+        decisive_passages=len(admitted),
+        inconclusive_passages=len(rows) - len(admitted),
         raw_dependency_risk_family_count=nli_report.dependency_risk_family_count,
         provisional_agreement_unit_count=len(units),
         supporting_unit_count=support_count,
@@ -261,4 +307,6 @@ def analyze_external_evidence_agreement(*, nli_report: ExternalNliReport) -> Ext
         has_within_unit_conflict=bool(mixed_count),
         evidence_status=status,
         warnings=tuple(sorted(warnings)),
+        subject_excluded_decisive_passage_ids=subject_excluded,
+        scope_excluded_decisive_passages=scope_excluded,
     )

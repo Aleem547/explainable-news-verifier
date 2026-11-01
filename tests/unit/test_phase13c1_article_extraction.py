@@ -132,6 +132,25 @@ class ArticleExtractionTests(unittest.TestCase):
         self.assertEqual(recorded["url"], hit().url)
         self.assertFalse(recorded["include_comments"])
         self.assertEqual(recorded["output_format"], "json")
+        self.assertIs(recorded["favor_precision"], True)
+
+    def test_explicit_server_recall_profile_preserves_attribution(self):
+        recorded = {}
+        def extract(html, **kwargs):
+            recorded.update(kwargs)
+            return fake_extract(html, **kwargs)
+        result = self.call(policy=ArticleExtractionPolicy(favor_precision=False), extractor=extract)
+        self.assertIs(recorded["favor_precision"], False)
+        self.assertEqual(result.extraction_method, "trafilatura_json_recall_v1")
+        self.assertEqual(result.document_url, hit().url)
+        self.assertEqual(result.html_sha256, sha256(BODY).hexdigest())
+        self.assertEqual(result.text_sha256, sha256_text(ARTICLE))
+        self.assertFalse(result.independently_verified)
+
+    def test_recall_profile_requires_real_boolean(self):
+        for value in (None, 0, 1, "false"):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                ArticleExtractionPolicy(favor_precision=value)
 
 
 if __name__ == "__main__":
