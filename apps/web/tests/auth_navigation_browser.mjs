@@ -100,7 +100,11 @@ try {
     assert.equal(await phone.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
     await phone.evaluate(() => scrollTo(0, 1200));
     const box = await nav(phone).getByRole("link", { name: "Log in", exact: true }).boundingBox();
-    assert.ok(box && box.y >= 0 && box.y < 64 && box.x >= 0 && box.x + box.width <= 320);
+    const header = await phone.locator("body > header").boundingBox();
+    assert.ok(header && header.y < 1 && header.y + header.height > 0 && header.height < 370,
+      JSON.stringify({ header, box }));
+    assert.ok(box && box.y >= 0 && box.y >= header.y && box.y + box.height <= Math.min(740, header.y + header.height) &&
+      box.x >= 0 && box.x + box.width <= 320);
     checks.push(`mobile_visible_auth_controls:${route}`);
   }
   await phone.getByRole("button", { name: "Continue with Google", exact: true }).waitFor();

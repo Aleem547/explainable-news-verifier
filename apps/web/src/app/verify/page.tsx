@@ -3,7 +3,7 @@ import { AppSidebar } from "@/components/layout/app-sidebar";
 import { VerificationWorkspace } from "@/components/verification/verification-workspace";
 
 export const metadata: Metadata = {
-  title: "Verify a Claim | Explainable Verifier",
+  title: "Verify a Claim",
   description: "Inspect evidence-based verification results and model uncertainty.",
 };
 

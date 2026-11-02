@@ -4,6 +4,7 @@ import { connection } from "next/server";
 import { ArrowRight, ShieldCheck } from "lucide-react";
 import { auth } from "@/auth";
 import { logInWithGoogle } from "@/app/auth-actions";
+import { SITE_NAME } from "@/lib/site-identity";
 
 async function AuthPanel() {
   await connection();
@@ -46,7 +47,7 @@ export function AuthPage({ mode }: { mode: "login" | "signup" }) {
         <span className="mb-6 inline-flex size-12 items-center justify-center rounded-2xl bg-blue-400/10 text-blue-300">
           <ShieldCheck size={25} aria-hidden="true" />
         </span>
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-300">Explainable Verifier</p>
+        <p className="text-xs font-semibold leading-5 text-blue-300">{SITE_NAME}</p>
         <h1 id="auth-title" className="mt-3 text-3xl font-semibold tracking-tight text-white">
           {signup ? "Create your account" : "Welcome back"}
         </h1>

@@ -3,7 +3,7 @@ import { AppSidebar } from "@/components/layout/app-sidebar";
 import { ArticleVerificationWorkspace } from "@/components/verification/article-verification-workspace";
 
 export const metadata: Metadata = {
-  title: "Article Verification Preview | Explainable Verifier",
+  title: "Article Verification Preview",
   description: "Review separate Wikipedia and external evidence for factual article claims.",
 };
 
