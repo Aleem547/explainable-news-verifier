@@ -7,6 +7,11 @@ import type { ArticleVerificationReport } from "@/lib/api/article-contracts";
 import { isArticleVerificationReport } from "@/lib/api/article-contracts";
 import { ArticleEvidenceDetails } from "./article-evidence-details";
 
+const MOON_ARTICLE = {
+  title: "Chandrayaan-3's Moon landing",
+  text: "Chandrayaan-3 landed on the Moon. This short article focuses on the mission's physical lunar landing and the evidence available to assess that claim.",
+} as const;
+
 export function ArticleVerificationWorkspace({ enabled }: { enabled: boolean }) {
   const [mode, setMode] = useState<"pasted" | "url">("pasted");
   const [text, setText] = useState("");
@@ -16,6 +21,7 @@ export function ArticleVerificationWorkspace({ enabled }: { enabled: boolean }) 
   const [hydrated, setHydrated] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const requestRef = useRef<AbortController | null>(null);
+  const articleTextRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
     setHydrated(true);
@@ -88,7 +94,7 @@ export function ArticleVerificationWorkspace({ enabled }: { enabled: boolean }) 
             onChange={(event) => { setTitle(event.target.value); setReport(null); }}
             className="w-full rounded-md border border-white/20 bg-[#080e18] px-3 py-2 text-white" />
           <label className="block text-sm font-medium text-slate-200" htmlFor="article-text">Article text</label>
-          <textarea id="article-text" rows={11} maxLength={8000} value={text} disabled={!enabled || !hydrated || busy}
+          <textarea ref={articleTextRef} id="article-text" rows={11} maxLength={8000} value={text} disabled={!enabled || !hydrated || busy}
             onChange={(event) => { setText(event.target.value); setReport(null); }}
             className="w-full rounded-md border border-white/20 bg-[#080e18] px-3 py-2 leading-relaxed text-white"
             placeholder="Paste the full article text here. Avoid including private or sensitive information." />
@@ -100,6 +106,20 @@ export function ArticleVerificationWorkspace({ enabled }: { enabled: boolean }) 
               {busy && <LoaderCircle className="size-4 animate-spin" />} {busy ? "Verifying…" : "Verify article preview"}
             </button>
             {busy && <button type="button" className="rounded-md border border-white/20 px-4 py-2 text-sm" onClick={() => requestRef.current?.abort()}>Cancel</button>}
+          </div>
+          <div className="flex flex-wrap items-center gap-2 pt-2">
+            <span className="text-xs text-slate-500">Try an example:</span>
+            <button type="button" disabled={!enabled || !hydrated || busy}
+              onClick={() => {
+                setTitle(MOON_ARTICLE.title);
+                setText(MOON_ARTICLE.text);
+                setReport(null);
+                setError(null);
+                articleTextRef.current?.focus();
+              }}
+              className="max-w-full rounded-full border border-white/10 px-3 py-1.5 text-left text-xs text-slate-300 hover:border-blue-400/50 hover:text-white disabled:opacity-50">
+              Chandrayaan-3 landed on the Moon.
+            </button>
           </div>
           {!enabled && <p className="text-sm text-amber-300">This preview is disabled by the deployment operator.</p>}
         </form>
