@@ -183,13 +183,13 @@ export default function Home() {
               <div>
                 <div className="flex items-center gap-2 text-sm font-medium text-amber-300">
                   <ShieldCheck size={16} aria-hidden="true" />
-                  Independent corroboration pending
+                  Claim-specific external checks
                 </div>
 
                 <p className="mt-2 text-sm leading-6 text-slate-400">
-                  Current verdicts use a Wikipedia-derived corpus.
-                  Independent cross-source verification remains
-                  a documented limitation.
+                  Article preview searches stored external sources.
+                  Reviewed cross-source results require eligible evidence
+                  and a valid origin review. Coverage varies by claim.
                 </p>
               </div>
             </div>
