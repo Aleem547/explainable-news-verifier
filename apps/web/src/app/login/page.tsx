@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { AuthPage } from "@/components/auth/auth-page";
 
 export const metadata: Metadata = {
-  title: "Log in | Explainable Verifier",
-  description: "Log in to your Explainable Verifier account with Google.",
+  title: "Log in",
+  description: "Log in to your account with Google.",
 };
 
 export default function LoginPage() {

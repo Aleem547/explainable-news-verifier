@@ -70,7 +70,7 @@ export function ArticleEvidenceDetails({ claim }: { claim: ArticleClaimResult })
       <p className="text-slate-400">These counts describe review coverage. They do not certify independent reporting.</p>
     </div> : claim.external_references.length > 0 && <p className="text-xs text-amber-300">Reporting-origin review unavailable. Independence not established.</p>}
     {claim.external_references.length > 0 && <>
-      <p className="text-xs font-medium text-slate-400">External source references (not independently verified)</p>
+      <p className="text-xs font-medium text-slate-400">Captured external source references</p>
       <p className="text-xs text-slate-400">NLI scores measure textual relations, not factual truth probabilities. Admission reflects the server&apos;s evidence review.</p>
       {claim.external_references.map((ref) => (
         <div key={ref.citation_id} className="rounded-lg border border-white/10 p-3 text-sm text-slate-300">
@@ -79,6 +79,7 @@ export function ArticleEvidenceDetails({ claim }: { claim: ArticleClaimResult })
             : ref.publisher_domain}</p>
           <p className="mt-1 font-medium">{admissionLabel(ref)}</p>
           <p className="text-xs text-slate-400">{ref.nli_label.toLowerCase()} · NLI score {ref.nli_confidence.toFixed(2)}</p>
+          {ref.nli_label === "NEUTRAL" && <p className="mt-1 text-xs text-slate-400">This passage neither supports nor refutes the claim. Its score is confidence in that textual relation.</p>}
           {!!ref.scope_exclusion_codes?.length && <p className="mt-1 text-xs text-amber-300">Review exclusions: {ref.scope_exclusion_codes.join(" · ").replaceAll("_", " ")}</p>}
           <details className="mt-2 text-xs text-slate-400">
             <summary className="cursor-pointer">Evidence provenance</summary>
