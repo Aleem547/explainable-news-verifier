@@ -11,33 +11,15 @@ const navigation = [
   { label: "Verification Pipeline", href: "/#pipeline" },
   { label: "Platform Capabilities", href: "/#capabilities" },
   { label: "Deployment Status", href: "/#status" },
+  { label: "My account", href: "/account" },
 ] as const;
 
 export function AppSidebar() {
   return (
-    <aside className="border-b border-white/10 bg-[#0e1420] lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-[264px] lg:shrink-0 lg:flex-col lg:border-b-0 lg:border-r">
-      <Link
-        href="/"
-        className="flex items-center gap-3 px-6 py-7"
-        aria-label="Explainable Verifier home"
-      >
-        <div className="flex size-11 items-center justify-center rounded-xl bg-blue-500 font-bold text-white">
-          EV
-        </div>
-
-        <div>
-          <p className="font-semibold tracking-tight text-slate-100">
-            Explainable Verifier
-          </p>
-          <p className="text-xs text-slate-500">
-            Evidence Intelligence
-          </p>
-        </div>
-      </Link>
-
+    <aside className="border-b border-white/10 bg-[#0e1420] lg:sticky lg:top-16 lg:flex lg:h-[calc(100dvh-4rem)] lg:w-[264px] lg:shrink-0 lg:flex-col lg:border-b-0 lg:border-r">
       <nav
         aria-label="Primary navigation"
-        className="flex flex-wrap gap-1 px-4 pb-5 lg:flex-col"
+        className="flex flex-wrap gap-1 px-4 py-5 lg:flex-col"
       >
         {navigation.map((item) => (
           <Link

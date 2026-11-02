@@ -16,7 +16,7 @@ import {
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-[#0a0f19] text-slate-100 lg:flex">
+    <div className="min-h-[calc(100dvh-4rem)] bg-[#0a0f19] text-slate-100 lg:flex">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:text-black"
